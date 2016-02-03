@@ -11,20 +11,23 @@ import org.joda.time.DateTime
 import scala.concurrent.{ExecutionContext, Future}
 
 
-class ValintarekisteriActor(restClient: VirkailijaRestClient, config: Config)  extends Actor {
+class ValintarekisteriActor(restClient: VirkailijaRestClient, config: Config) extends Actor {
 
   implicit val ec: ExecutionContext = context.dispatcher
 
+  private val ok = 200
+
   override def receive: Receive = {
-    case ValintarekisteriQuery(henkiloOid, koulutuksenAlkamiskausi) => pipe(fetchEnsimmainenVastaanotto(henkiloOid, koulutuksenAlkamiskausi)) pipeTo sender
+    case ValintarekisteriQuery(henkiloOids, koulutuksenAlkamiskausi) =>
+      fetchEnsimmainenVastaanotto(henkiloOids, koulutuksenAlkamiskausi) pipeTo sender
   }
 
-  def fetchEnsimmainenVastaanotto(henkiloOid: String, koulutuksenAlkamiskausi: String): Future[Option[DateTime]] = {
-    val url = s"/ensikertalaisuus/$henkiloOid?koulutuksenAlkamiskausi=$koulutuksenAlkamiskausi"
-    restClient.readObject[EnsimmainenVastaanotto](url, 200, 2).map(_.paattyi)
+  def fetchEnsimmainenVastaanotto(henkiloOids: Set[String], koulutuksenAlkamiskausi: String): Future[Seq[EnsimmainenVastaanotto]] = {
+    val url = s"/ensikertalaisuus?koulutuksenAlkamiskausi=${URLEncoder.encode(koulutuksenAlkamiskausi, "UTF-8")}"
+    restClient.postObject[Set[String], Seq[EnsimmainenVastaanotto]](url, ok, henkiloOids)
   }
 }
 
-case class ValintarekisteriQuery(henkiloOid: String, koulutuksenAlkamiskausi: String)
+case class ValintarekisteriQuery(henkiloOids: Set[String], koulutuksenAlkamiskausi: String)
 
 case class EnsimmainenVastaanotto(oid: String, paattyi: Option[DateTime])
