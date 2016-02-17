@@ -11,13 +11,14 @@ import akka.actor.{ActorSystem, Props}
 import akka.event.Logging
 import akka.pattern.ask
 import akka.util.Timeout
+import com.ning.http.client.AsyncHandler.STATE
 import com.ning.http.client._
 import dispatch._
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriJsonSupport
 
 import scala.compat.Platform
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContextExecutorService, ExecutionContext, Future}
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
@@ -35,17 +36,18 @@ case class ServiceConfig(casUrl: Option[String] = None,
                          serviceUrl: String,
                          user: Option[String] = None,
                          password: Option[String] = None,
-                         properties: Map[String, String] = Map.empty) extends HttpConfig(properties) {
-}
+                         properties: Map[String, String] = Map.empty) extends HttpConfig(properties)
 
-class VirkailijaRestClient(config: ServiceConfig, aClient: Option[AsyncHttpClient] = None)(implicit val ec: ExecutionContext, val system: ActorSystem) extends HakurekisteriJsonSupport {
-  implicit val defaultTimeout: Timeout = 60.seconds
+class VirkailijaRestClient(config: ServiceConfig, aClient: Option[AsyncHttpClient] = None)
+                          (implicit val ec: ExecutionContext, val system: ActorSystem) extends HakurekisteriJsonSupport {
 
-  val serviceUrl: String = config.serviceUrl
-  val user = config.user
-  val password = config.password
-  val logger = Logging.getLogger(system, this)
-  val serviceName = serviceUrl.split("/").lastOption.getOrElse(UUID.randomUUID())
+  private implicit val defaultTimeout: Timeout = 60.seconds
+
+  private val serviceUrl: String = config.serviceUrl
+  private val user = config.user
+  private val password = config.password
+  private val logger = Logging.getLogger(system, this)
+  private val serviceName = serviceUrl.split("/").lastOption.getOrElse(UUID.randomUUID())
 
   private val internalClient: Http = aClient.map(Http(_)).getOrElse(Http.configure(_
     .setConnectionTimeoutInMs(config.httpClientConnectionTimeout)
@@ -54,9 +56,9 @@ class VirkailijaRestClient(config: ServiceConfig, aClient: Option[AsyncHttpClien
     .setFollowRedirects(true)
     .setMaxRequestRetry(2)
   ))
-  val casActor = system.actorOf(Props(new CasActor(config, aClient)), s"$serviceName-cas-client-pool-${new SecureRandom().nextLong().toString}")
+  private lazy val casActor = system.actorOf(Props(new CasActor(config, aClient)), s"$serviceName-cas-client-pool-${new SecureRandom().nextLong().toString}")
 
-  object client {
+  object Client {
     private def jSessionId: Future[JSessionId] = (casActor ? JSessionKey(serviceUrl)).mapTo[JSessionId]
 
     import org.json4s.jackson.Serialization._
@@ -71,7 +73,10 @@ class VirkailijaRestClient(config: ServiceConfig, aClient: Option[AsyncHttpClien
 
     private implicit def req2JsonReq(req:Req):JsonReq = new JsonReq(req)
 
-    private def withSessionAndBody[A <: AnyRef: Manifest, B <: AnyRef: Manifest](request: Req)(f: (Req) => Future[B])(jSsessionId: String)(body: Option[A] = None): Future[B] = {
+    private def withSessionAndBody[A <: AnyRef: Manifest, B <: AnyRef: Manifest](request: Req)
+                                                                                (f: (Req) => Future[B])
+                                                                                (jSsessionId: String)
+                                                                                (body: Option[A] = None): Future[B] = {
       f(request.attachJsonBody(body) <:< Map("Cookie" -> s"${JSessionIdCookieParser.name}=$jSsessionId"))
     }
 
@@ -99,27 +104,30 @@ class VirkailijaRestClient(config: ServiceConfig, aClient: Option[AsyncHttpClien
 
   import fi.vm.sade.hakurekisteri.integration.VirkailijaRestImplicits._
 
-  def retryable(t: Throwable): Boolean = t match {
+  private def retryable(t: Throwable): Boolean = t match {
     case t: TimeoutException => true
     case t: ConnectException => true
     case PreconditionFailedException(_, code) if code >= 500 => true
     case _ => false
   }
 
-  private def tryClient[A <: AnyRef: Manifest](uri: String, acceptedResponseCode: Int, maxRetries: Int, retryCount: AtomicInteger): Future[A] = client.request[A, A](uri.accept(acceptedResponseCode).as[A]).recoverWith {
-    case t: ExecutionException if t.getCause != null && retryable(t.getCause) =>
-      if (retryCount.getAndIncrement <= maxRetries) {
-        logger.warning(s"retrying request to $uri due to $t, retry attempt #${retryCount.get - 1}")
-        Future { Thread.sleep(1000) }.flatMap(u => tryClient(uri, acceptedResponseCode, maxRetries, retryCount))
-      } else Future.failed(t)
-  }
+  private def tryClient[A <: AnyRef: Manifest](uri: String, acceptedResponseCode: Int, maxRetries: Int, retryCount: AtomicInteger): Future[A] =
+    Client.request[A, A](uri.accept(acceptedResponseCode).as[A]).recoverWith {
+      case t: ExecutionException if retryable(t.getCause) =>
+        if (retryCount.getAndIncrement <= maxRetries) {
+          logger.warning(s"retrying request to $uri due to $t, retry attempt #${retryCount.get - 1}")
+          Future { Thread.sleep(1.second.toMillis) }.flatMap(u => tryClient(uri, acceptedResponseCode, maxRetries, retryCount))
+        } else {
+          Future.failed(t)
+        }
+    }
 
-  def result(t: Try[_]): String = t match {
+  private def result(t: Try[_]): String = t match {
     case Success(_) => "success"
     case Failure(e) => s"failure: $e"
   }
 
-  def logLongQuery(f: Future[_], uri: String) = {
+  private def logLongQuery(f: Future[_], uri: String) {
     val t0 = Platform.currentTime
     f.onComplete(t => {
       val took = Platform.currentTime - t0
@@ -137,7 +145,7 @@ class VirkailijaRestClient(config: ServiceConfig, aClient: Option[AsyncHttpClien
   }
 
   def postObject[A <: AnyRef: Manifest, B <: AnyRef: Manifest](uri: String, acceptedResponseCode: Int, resource: A): Future[B] = {
-    val result = client.request[A, B](uri.accept(acceptedResponseCode).as[B], Some(resource))
+    val result = Client.request[A, B](uri.accept(acceptedResponseCode).as[B], Some(resource))
     logLongQuery(result, uri)
     result
   }
@@ -168,7 +176,7 @@ object JSessionIdCookieParser {
 }
 
 object ExecutorUtil {
-  def createExecutor(threads: Int, poolName: String) = {
+  def createExecutor(threads: Int, poolName: String): ExecutionContextExecutorService = {
     val threadNumber = new AtomicInteger(1)
 
     val pool = Executors.newFixedThreadPool(threads, new ThreadFactory() {
@@ -186,11 +194,14 @@ object ExecutorUtil {
 abstract class JsonExtractor(val uri: String) extends HakurekisteriJsonSupport {
   def handler[T](f: (Response) => T): AsyncHandler[T]
 
-  def as[T: Manifest] = {
+  def as[T: Manifest]: (String, AsyncHandler[T]) = {
     val f = (resp: Response) => {
       import org.json4s.jackson.Serialization.read
-      if (manifest[T] == manifest[String]) resp.getResponseBody.asInstanceOf[T]
-      else read[T](new InputStreamReader(resp.getResponseBodyAsStream))
+      if (manifest[T] == manifest[String]) {
+        resp.getResponseBody.asInstanceOf[T]
+      } else {
+        read[T](new InputStreamReader(resp.getResponseBodyAsStream))
+      }
     }
 
     (uri, handler(f))
@@ -199,7 +210,7 @@ abstract class JsonExtractor(val uri: String) extends HakurekisteriJsonSupport {
 
 class VirkailijaResultTuples(uri: String) {
   def accept[T](codes: Int*): JsonExtractor = new JsonExtractor(uri) {
-    override def handler[T](f: (Response) => T): AsyncHandler[T] = new CodeFunctionHandler(codes.toSet, f)
+    override def handler[A](f: (Response) => A): AsyncHandler[A] = new CodeFunctionHandler(codes.toSet, f)
   }
 }
 
@@ -212,10 +223,11 @@ class CodeFunctionHandler[T](override val codes: Set[Int], f: Response => T) ext
 trait CodeHandler[T] extends AsyncHandler[T] {
   val codes: Set[Int]
 
-  abstract override def onStatusReceived(status: HttpResponseStatus) = {
-    if (codes.contains(status.getStatusCode))
+  abstract override def onStatusReceived(status: HttpResponseStatus): STATE = {
+    if (codes.contains(status.getStatusCode)) {
       super.onStatusReceived(status)
-    else
+    } else {
       throw PreconditionFailedException(s"precondition failed for url: ${status.getUrl}, response code: ${status.getStatusCode}", status.getStatusCode)
+    }
   }
 }
