@@ -4,10 +4,10 @@ import java.util.UUID
 
 import org.joda.time.DateTime
 
-import scala.slick.lifted
-import scala.slick.lifted.ShapedValue
-import fi.vm.sade.hakurekisteri.rest.support.{JournalTable, HakurekisteriDriver}
-import HakurekisteriDriver.simple._
+import slick.lifted.ShapedValue
+import fi.vm.sade.hakurekisteri.rest.support.JournalTable
+import slick.driver.PostgresDriver.api._
+import slick.lifted
 
 object OpiskeluoikeusRow {
   type OpiskeluoikeusType = (Long, Option[Long], String, String, String, String)
@@ -16,14 +16,15 @@ object OpiskeluoikeusRow {
 import OpiskeluoikeusRow._
 
 class OpiskeluoikeusTable(tag: Tag) extends JournalTable[Opiskeluoikeus, UUID, OpiskeluoikeusType](tag, "opiskeluoikeus") {
-  def alkuPaiva = column[Long]("alku_paiva")
-  def loppuPaiva = column[Option[Long]]("loppu_paiva")
-  def henkiloOid = column[String]("henkilo_oid")
-  def komo = column[String]("komo")
-  def myontaja = column[String]("myontaja")
+  def alkuPaiva: Rep[Long] = column[Long]("alku_paiva")
+  def loppuPaiva: Rep[Option[Long]] = column[Option[Long]]("loppu_paiva")
+  def henkiloOid: Rep[String] = column[String]("henkilo_oid")
+  def komo: Rep[String] = column[String]("komo")
+  def myontaja: Rep[String] = column[String]("myontaja")
 
 
-  override def resourceShape: ShapedValue[(lifted.Column[Long], lifted.Column[Option[Long]], lifted.Column[String], lifted.Column[String], lifted.Column[String], lifted.Column[String]), OpiskeluoikeusType] = (alkuPaiva, loppuPaiva, henkiloOid, komo, myontaja, source).shaped
+  override def resourceShape: ShapedValue[(Rep[Long], Rep[Option[Long]], Rep[String], Rep[String], Rep[String], Rep[String]), OpiskeluoikeusType] =
+    (alkuPaiva, loppuPaiva, henkiloOid, komo, myontaja, source).shaped
 
   override def row(oo: Opiskeluoikeus): Option[OpiskeluoikeusType] = Some(
     oo.aika.alku.getMillis,

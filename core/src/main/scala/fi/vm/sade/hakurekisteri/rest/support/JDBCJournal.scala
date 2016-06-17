@@ -13,12 +13,16 @@ import org.json4s.JsonAST.JValue
 import scala.compat.Platform
 import scala.language.existentials
 import scala.reflect.ClassTag
-import scala.slick.ast.{BaseTypedType, TypedType}
-import scala.slick.driver.JdbcDriver
-import scala.slick.jdbc.JdbcType
-import scala.slick.jdbc.meta.MTable
-import scala.slick.lifted
-import scala.slick.lifted.{TableQuery, _}
+import slick.ast.{BaseTypedType, TypedType}
+import slick.driver.JdbcDriver
+import slick.driver.PostgresDriver.api._
+import slick.jdbc.JdbcType
+import slick.jdbc.meta.MTable
+import slick.lifted
+import slick.lifted.{PrimaryKey, ProvenShape, ShapedValue}
+import slick.profile.RelationalProfile
+
+import scala.concurrent.{Await, ExecutionContext}
 import scala.xml.Elem
 
 
@@ -49,22 +53,24 @@ object HakurekisteriDriver extends JdbcDriver {
     }
   }
 
-  override val simple = new SimpleQL with Implicits
-
   trait Implicits extends super.Implicits with HakurekisteriJsonSupport {
-    class JValueType(implicit tmd: JdbcType[String], override val classTag: ClassTag[JValue]) extends HakurekisteriDriver.MappedJdbcType[JValue, String] with BaseTypedType[JValue] {
+    class JValueType(implicit tmd: JdbcType[String], override val classTag: ClassTag[JValue])
+      extends HakurekisteriDriver.MappedJdbcType[JValue, String] with BaseTypedType[JValue] {
+
       import org.json4s.jackson.JsonMethods._
       override def newSqlType: Option[Int] = Option(java.sql.Types.CLOB)
-      override def sqlTypeName: String = "TEXT"
+      override def newSqlTypeName(name: Option[RelationalProfile.ColumnOption.Length]): Option[String] = Some("TEXT")
       override def comap(json: String): JValue = parse(json)
       override def map(data: JValue): String = compact(render(data))
     }
 
     implicit val jvalueType = new JValueType
 
-    class ElemType(implicit tmd: JdbcType[String], override val classTag: ClassTag[Elem]) extends HakurekisteriDriver.MappedJdbcType[Elem, String] with BaseTypedType[Elem] {
+    class ElemType(implicit tmd: JdbcType[String], override val classTag: ClassTag[Elem])
+      extends HakurekisteriDriver.MappedJdbcType[Elem, String] with BaseTypedType[Elem] {
+
       override def newSqlType: Option[Int] = Option(java.sql.Types.CLOB)
-      override def sqlTypeName: String = "TEXT"
+      override def newSqlTypeName(name: Option[RelationalProfile.ColumnOption.Length]): Option[String] = Some("TEXT")
       override def comap(xml: String): Elem = SafeXML.loadString(xml)
       override def map(data: Elem): String = data.toString()
     }
@@ -73,18 +79,19 @@ object HakurekisteriDriver extends JdbcDriver {
   }
 }
 
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.simple._
+abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name: String)
+                                                                (implicit val idType: TypedType[I])
+  extends Table[Delta[R, I]](tag, name) with HakurekisteriColumns {
 
-abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name: String)(implicit val idType: TypedType[I]) extends Table[Delta[R, I]](tag, name) with HakurekisteriColumns {
-  def resourceId = column[I]("resource_id")
-  def source = column[String]("source")
-  def inserted = column[Long]("inserted")
-  def deleted = column[Boolean]("deleted")
-  def pk = primaryKey(s"pk_$name", (resourceId, inserted))
+  def resourceId: Rep[I] = column[I]("resource_id")
+  def source: Rep[String] = column[String]("source")
+  def inserted: Rep[Long] = column[Long]("inserted")
+  def deleted: Rep[Boolean] = column[Boolean]("deleted")
+  def pk: PrimaryKey = primaryKey(s"pk_$name", (resourceId, inserted))
 
   val journalEntryShape = (resourceId, inserted, deleted).shaped
 
-  type ShapedJournalRow = (lifted.Column[I], lifted.Column[String], lifted.Column[Long], lifted.Column[Boolean])
+  type ShapedJournalRow = (lifted.Rep[I], lifted.Rep[String], lifted.Rep[Long], lifted.Rep[Boolean])
   type JournalRow = (I, Long, Boolean)
 
   val resource: ResourceRow => R
@@ -101,13 +108,14 @@ abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name:
 
   val deletedValues: (String) => ResourceRow
 
-  def rowShaper(d: Delta[R, I]) = d match {
+  def rowShaper(d: Delta[R, I]): Option[((I, Long, Boolean), ResourceRow)] = d match {
     case Deleted(id, source) => Some((id, Platform.currentTime, true), deletedValues(source))
     case Updated(r) => row(r).map(updateRow(r))
     case Insert(r) => throw new NotImplementedError("Insert deltas not implemented in JDBCJournal")
   }
 
-  def updateRow(r: R with Identified[I])(resourceData: ResourceRow) = ((r.id, Platform.currentTime, false), resourceData)
+  def updateRow(r: R with Identified[I])(resourceData: ResourceRow): ((I, Long, Boolean), ResourceRow) =
+    ((r.id, Platform.currentTime, false), resourceData)
 
   def row(resource: R): Option[ResourceRow]
 
@@ -120,48 +128,49 @@ abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name:
   }
 }
 
-class JDBCJournal[R <: Resource[I, R], I, T <: JournalTable[R, I, _]](val table: TableQuery[T])(implicit val db: Database, val idType: BaseTypedType[I], implicit val system: ActorSystem) extends Journal[R, I] {
+import scala.concurrent.duration._
+
+class JDBCJournal[R <: Resource[I, R], I, T <: JournalTable[R, I, _]](val table: TableQuery[T])
+                                                                     (implicit val db: Database, val idType: BaseTypedType[I], implicit val system: ActorSystem)
+  extends Journal[R, I] {
+
+  implicit val ec: ExecutionContext = system.dispatcher
   val log = Logging.getLogger(system, this)
   lazy val tableName = table.baseTableRow.tableName
 
-  db withSession (
-    implicit session =>
-      if (MTable.getTables(tableName).list.isEmpty) {
-        table.ddl.create
-      }
-    )
+  Await.result(db.run(MTable.getTables(tableName)).map(r => {
+    if (r.isEmpty) {
+      table.schema.create
+    }
+  }), 30.seconds)
 
   log.debug(s"started ${getClass.getSimpleName} with table $tableName")
 
-  override def addModification(o: Delta[R, I]): Unit = db withSession (
-    implicit session =>
+  override def addModification(o: Delta[R, I]): Unit = ???
+    //TODO
+    /*
+    db withSession (implicit session =>
       table += o
     )
+    */
 
   override def journal(latestQuery: Option[Long]): Seq[Delta[R, I]] = latestQuery match {
     case None =>
-      db withSession {
-        implicit session =>
-          queryToAppliedQueryInvoker(latestResources).list
-
-      }
+      Await.result(db.run(latestResources.result), 2.minutes)
     case Some(lat) =>
-      db withSession {
-        implicit session =>
-          table.filter(_.inserted >= lat).sortBy(_.inserted.asc).list
-      }
+      Await.result(db.run(latestResources.filter(_.inserted >= lat).result), 2.minutes)
   }
 
-  val resourcesWithVersions = table.groupBy[lifted.Column[I], I, lifted.Column[I], T](_.resourceId)
+  val resourcesWithVersions = table.groupBy[lifted.Rep[I], I, lifted.Rep[I], T](_.resourceId)
 
   val latest = for {
-    (id: lifted.Column[I], resource: lifted.Query[T, T#TableElementType, Seq]) <- resourcesWithVersions
+    (id: lifted.Rep[I], resource: lifted.Query[T, T#TableElementType, Seq]) <- resourcesWithVersions
   } yield (id, resource.map(_.inserted).max)
 
   val result: lifted.Query[T, Delta[R, I], Seq] = for (
     delta <- table;
     (id, timestamp) <- latest
-    if columnExtensionMethods(delta.resourceId) === id && columnExtensionMethods(delta.inserted).===(optionColumnExtensionMethods(timestamp).getOrElse(0))
+    if delta.resourceId === id && delta.inserted === timestamp
 
   ) yield delta
 

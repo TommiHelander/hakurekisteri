@@ -75,7 +75,7 @@ object HakurekisteriBuild extends Build {
     "org.json4s" %% "json4s-ext" % "3.3.0",
     "org.json4s" %% "json4s-jackson" % "3.3.0",
     "com.github.nscala-time" %% "nscala-time" % "1.4.0",
-    "com.typesafe.slick" %% "slick" % "2.1.0",
+    "com.typesafe.slick" %% "slick" % "3.0.0",
     "com.h2database" % "h2" % "1.3.176",
     "org.postgresql" % "postgresql" % "9.3-1100-jdbc4",
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.2",

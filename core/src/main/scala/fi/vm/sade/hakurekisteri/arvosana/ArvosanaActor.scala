@@ -6,8 +6,6 @@ import fi.vm.sade.hakurekisteri.storage._
 import fi.vm.sade.hakurekisteri.storage.repository._
 import java.util.UUID
 
-import org.joda.time.LocalDate
-
 import scala.concurrent.{ExecutionContext, Future}
 
 
@@ -71,8 +69,8 @@ class ArvosanaActor(val journal:Journal[Arvosana, UUID] = new InMemJournal[Arvos
   override def receive: Receive = illegalQuery orElse emptyLisatieto orElse super.receive
 }
 
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.simple._
-import scala.slick.lifted
+import slick.driver.PostgresDriver.api._
+import slick.lifted
 
 class ArvosanaJDBCActor(val journal: JDBCJournal[Arvosana, UUID, ArvosanaTable], poolSize: Int)
   extends ResourceActor[Arvosana, UUID] with JDBCRepository[Arvosana, UUID, ArvosanaTable] with JDBCService[Arvosana, UUID, ArvosanaTable] {
