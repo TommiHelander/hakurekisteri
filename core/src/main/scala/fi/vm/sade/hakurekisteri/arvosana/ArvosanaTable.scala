@@ -1,10 +1,9 @@
 package fi.vm.sade.hakurekisteri.arvosana
 
 import fi.vm.sade.hakurekisteri.rest.support.{HakurekisteriDriver, JournalTable}
-import HakurekisteriDriver.simple._
 import java.util.UUID
 import org.joda.time.LocalDate
-import scala.util.Try
+import HakurekisteriDriver.api._
 
 
 class ArvosanaTable(tag: Tag) extends JournalTable[Arvosana, UUID, (UUID, String, String, String, Option[String], Boolean, Option[Int], Option[String], String, Map[String,String], Option[Int])](tag, "arvosana") {

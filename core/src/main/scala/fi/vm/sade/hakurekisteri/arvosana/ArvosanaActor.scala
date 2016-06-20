@@ -69,7 +69,7 @@ class ArvosanaActor(val journal:Journal[Arvosana, UUID] = new InMemJournal[Arvos
   override def receive: Receive = illegalQuery orElse emptyLisatieto orElse super.receive
 }
 
-import slick.driver.PostgresDriver.api._
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import slick.lifted
 
 class ArvosanaJDBCActor(val journal: JDBCJournal[Arvosana, UUID, ArvosanaTable], poolSize: Int)

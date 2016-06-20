@@ -14,8 +14,7 @@ import scala.compat.Platform
 import scala.language.existentials
 import scala.reflect.ClassTag
 import slick.ast.{BaseTypedType, TypedType}
-import slick.driver.JdbcDriver
-import slick.driver.PostgresDriver.api._
+import slick.driver.PostgresDriver
 import slick.jdbc.JdbcType
 import slick.jdbc.meta.MTable
 import slick.lifted
@@ -26,12 +25,9 @@ import scala.concurrent.{Await, ExecutionContext}
 import scala.xml.Elem
 
 
-object HakurekisteriDriver extends JdbcDriver {
+object HakurekisteriDriver extends PostgresDriver {
 
-  override val columnTypes = new super.JdbcTypes {
-
-    override val uuidJdbcType: super.UUIDJdbcType = new UUIDJdbcType
-
+  override val columnTypes = new JdbcTypes {
     class UUIDJdbcType(implicit override val classTag: ClassTag[UUID]) extends super.UUIDJdbcType {
       override def sqlType = java.sql.Types.VARCHAR
       override def setValue(v: UUID, p: PreparedStatement, idx: Int) = p.setString(idx, v.toString)
@@ -51,9 +47,11 @@ object HakurekisteriDriver extends JdbcDriver {
         sb.toString()
       }
     }
+
+    override val uuidJdbcType: super.UUIDJdbcType = new UUIDJdbcType
   }
 
-  trait Implicits extends super.Implicits with HakurekisteriJsonSupport {
+  trait CustomImplicits extends super[PostgresDriver].Implicits with HakurekisteriJsonSupport {
     class JValueType(implicit tmd: JdbcType[String], override val classTag: ClassTag[JValue])
       extends HakurekisteriDriver.MappedJdbcType[JValue, String] with BaseTypedType[JValue] {
 
@@ -77,7 +75,11 @@ object HakurekisteriDriver extends JdbcDriver {
 
     implicit val elemType = new ElemType
   }
+
+  override val api = new API with CustomImplicits {}
 }
+
+import HakurekisteriDriver.api._
 
 abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name: String)
                                                                 (implicit val idType: TypedType[I])
@@ -87,14 +89,28 @@ abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name:
   def source: Rep[String] = column[String]("source")
   def inserted: Rep[Long] = column[Long]("inserted")
   def deleted: Rep[Boolean] = column[Boolean]("deleted")
-  def pk: PrimaryKey = primaryKey(s"pk_$name", (resourceId, inserted))
 
-  val journalEntryShape = (resourceId, inserted, deleted).shaped
+  val journalEntryShape = anyToToShapedValue((resourceId, inserted, deleted)).shaped
 
-  type ShapedJournalRow = (lifted.Rep[I], lifted.Rep[String], lifted.Rep[Long], lifted.Rep[Boolean])
-  type JournalRow = (I, Long, Boolean)
+  def resourceShape: ShapedValue[_, ResourceRow]
+
+  val combinedShape = journalEntryShape zip resourceShape
+
+  def row(resource: R): Option[ResourceRow]
+
+  def updateRow(r: R with Identified[I])(resourceData: ResourceRow): ((I, Long, Boolean), ResourceRow) =
+    ((r.id, Platform.currentTime, false), resourceData)
+
+  val deletedValues: (String) => ResourceRow
+
+  def rowShaper(d: Delta[R, I]): Option[((I, Long, Boolean), ResourceRow)] = d match {
+    case Deleted(id, source) => Some((id, Platform.currentTime, true), deletedValues(source))
+    case Updated(r) => row(r).map(updateRow(r))
+    case Insert(r) => throw new NotImplementedError("Insert deltas not implemented in JDBCJournal")
+  }
 
   val resource: ResourceRow => R
+
   val extractSource: ResourceRow => String
 
   def delta(resourceId: I, inserted: Long, deleted: Boolean)(resourceData: ResourceRow): Delta[R, I] = if (deleted) {
@@ -106,26 +122,10 @@ abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name:
 
   def deltaShaper(j: (I, Long, Boolean), rd: ResourceRow): Delta[R, I] = (delta _).tupled(j)(rd)
 
-  val deletedValues: (String) => ResourceRow
+  def * : ProvenShape[Delta[R, I]] = ProvenShape.proveShapeOf(anyToToShapedValue(combinedShape) <> ((deltaShaper _).tupled, rowShaper))
 
-  def rowShaper(d: Delta[R, I]): Option[((I, Long, Boolean), ResourceRow)] = d match {
-    case Deleted(id, source) => Some((id, Platform.currentTime, true), deletedValues(source))
-    case Updated(r) => row(r).map(updateRow(r))
-    case Insert(r) => throw new NotImplementedError("Insert deltas not implemented in JDBCJournal")
-  }
+  def pk: PrimaryKey = primaryKey(s"pk_$name", (resourceId, inserted))
 
-  def updateRow(r: R with Identified[I])(resourceData: ResourceRow): ((I, Long, Boolean), ResourceRow) =
-    ((r.id, Platform.currentTime, false), resourceData)
-
-  def row(resource: R): Option[ResourceRow]
-
-  def resourceShape: ShapedValue[_, ResourceRow]
-
-  val combinedShape = journalEntryShape zip resourceShape
-
-  def * : ProvenShape[Delta[R, I]] = {
-    combinedShape <>((deltaShaper _).tupled, rowShaper)
-  }
 }
 
 import scala.concurrent.duration._
@@ -138,11 +138,13 @@ class JDBCJournal[R <: Resource[I, R], I, T <: JournalTable[R, I, _]](val table:
   val log = Logging.getLogger(system, this)
   lazy val tableName = table.baseTableRow.tableName
 
-  Await.result(db.run(MTable.getTables(tableName)).map(r => {
-    if (r.isEmpty) {
-      table.schema.create
+  Await.result(db.run(MTable.getTables(tableName).flatMap((t: Vector[MTable]) => {
+    if (t.isEmpty) {
+      DBIO.seq(schemaActionExtensionMethods(tableQueryToTableQueryExtensionMethods(table).schema).create)
+    } else {
+      DBIO.seq()
     }
-  }), 30.seconds)
+  })), 30.seconds)
 
   log.debug(s"started ${getClass.getSimpleName} with table $tableName")
 
@@ -161,10 +163,10 @@ class JDBCJournal[R <: Resource[I, R], I, T <: JournalTable[R, I, _]](val table:
       Await.result(db.run(latestResources.filter(_.inserted >= lat).result), 2.minutes)
   }
 
-  val resourcesWithVersions = table.groupBy[lifted.Rep[I], I, lifted.Rep[I], T](_.resourceId)
+  val resourcesWithVersions = table.groupBy[Rep[I], I, Rep[I], T](_.resourceId)
 
   val latest = for {
-    (id: lifted.Rep[I], resource: lifted.Query[T, T#TableElementType, Seq]) <- resourcesWithVersions
+    (id: Rep[I], resource: lifted.Query[T, T#TableElementType, Seq]) <- resourcesWithVersions
   } yield (id, resource.map(_.inserted).max)
 
   val result: lifted.Query[T, Delta[R, I], Seq] = for (

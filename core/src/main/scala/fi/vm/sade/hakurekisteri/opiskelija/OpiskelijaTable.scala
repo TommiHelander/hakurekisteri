@@ -4,7 +4,7 @@ import org.joda.time.DateTime
 import java.util.UUID
 
 import fi.vm.sade.hakurekisteri.rest.support.JournalTable
-import slick.driver.PostgresDriver.api._
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import slick.lifted.ShapedValue
 
 class OpiskelijaTable(tag: Tag)

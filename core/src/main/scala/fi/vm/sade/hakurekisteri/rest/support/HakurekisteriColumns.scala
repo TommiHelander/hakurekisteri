@@ -1,11 +1,12 @@
 package fi.vm.sade.hakurekisteri.rest.support
 
 import org.joda.time.{LocalDate, DateTime}
-import HakurekisteriDriver.simple._
 import fi.vm.sade.hakurekisteri.suoritus.yksilollistaminen.Yksilollistetty
 import fi.vm.sade.hakurekisteri.suoritus.yksilollistaminen
 import org.json4s.JValue
 import org.json4s.JsonDSL._
+import HakurekisteriDriver.api._
+
 
 trait HakurekisteriColumns extends HakurekisteriJsonSupport {
   implicit val datetimeLong = MappedColumnType.base[DateTime, Long](

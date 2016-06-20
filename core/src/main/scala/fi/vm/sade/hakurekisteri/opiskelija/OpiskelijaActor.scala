@@ -3,7 +3,7 @@ package fi.vm.sade.hakurekisteri.opiskelija
 import akka.event.Logging
 import com.github.nscala_time.time.Imports._
 import fi.vm.sade.hakurekisteri.rest.support.Kausi._
-import fi.vm.sade.hakurekisteri.rest.support.{JDBCJournal, JDBCRepository, JDBCService, Query}
+import fi.vm.sade.hakurekisteri.rest.support.{JDBCJournal, JDBCRepository, JDBCService}
 import fi.vm.sade.hakurekisteri.storage._
 import fi.vm.sade.hakurekisteri.storage.repository._
 import java.util.UUID
@@ -11,7 +11,8 @@ import java.util.UUID
 import fi.vm.sade.hakurekisteri.rest.support
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.slick.lifted.{Column, Query}
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
+import slick.lifted
 
 
 trait OpiskelijaRepository extends JournaledRepository[Opiskelija, UUID] {
@@ -166,13 +167,11 @@ class OpiskelijaActor(val journal:Journal[Opiskelija, UUID] = new InMemJournal[O
   override val logger = Logging(context.system, this)
 }
 
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.simple._
-import scala.slick.lifted
 
 class OpiskelijaJDBCActor(val journal: JDBCJournal[Opiskelija, UUID, OpiskelijaTable], poolSize: Int)
   extends ResourceActor[Opiskelija, UUID] with JDBCRepository[Opiskelija, UUID, OpiskelijaTable] with JDBCService[Opiskelija, UUID, OpiskelijaTable] {
 
-  override def deduplicationQuery(i: Opiskelija)(t: OpiskelijaTable): lifted.Column[Boolean] =
+  override def deduplicationQuery(i: Opiskelija)(t: OpiskelijaTable): Rep[Boolean] =
     t.oppilaitosOid === i.oppilaitosOid && t.luokkataso === i.luokkataso && t.henkiloOid === i.henkiloOid
 
   override val dbExecutor: ExecutionContext = context.dispatcher
@@ -181,17 +180,17 @@ class OpiskelijaJDBCActor(val journal: JDBCJournal[Opiskelija, UUID, OpiskelijaT
       all.filter(t => matchHenkilo(henkilo)(t) && matchOppilaitosOid(oppilaitosOid)(t) && matchLuokka(luokka)(t))
   }
 
-  private def matchHenkilo(henkilo: Option[String])(t: OpiskelijaTable): Column[Boolean] = henkilo match {
+  private def matchHenkilo(henkilo: Option[String])(t: OpiskelijaTable): Rep[Boolean] = henkilo match {
     case Some(h) => t.henkiloOid === h
     case None => true
   }
 
-  private def matchOppilaitosOid(oppilaitosOid: Option[String])(t: OpiskelijaTable): Column[Boolean] = oppilaitosOid match {
+  private def matchOppilaitosOid(oppilaitosOid: Option[String])(t: OpiskelijaTable): Rep[Boolean] = oppilaitosOid match {
     case Some(o) => t.oppilaitosOid === o
     case None => true
   }
 
-  private def matchLuokka(luokka: Option[String])(t: OpiskelijaTable): Column[Boolean] = luokka match {
+  private def matchLuokka(luokka: Option[String])(t: OpiskelijaTable): Rep[Boolean] = luokka match {
     case Some(l) => t.luokka === l
     case None => true
   }

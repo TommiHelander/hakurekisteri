@@ -5,7 +5,7 @@ import fi.vm.sade.hakurekisteri.storage.{Identified, ResourceService}
 import fi.vm.sade.hakurekisteri.storage.repository.Deleted
 
 import scala.concurrent.{Await, ExecutionContext, Future}
-import slick.driver.PostgresDriver.api._
+import HakurekisteriDriver.api._
 import slick.ast.BaseTypedType
 import slick.lifted
 

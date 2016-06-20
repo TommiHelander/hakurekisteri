@@ -3,7 +3,7 @@ package fi.vm.sade.hakurekisteri.batchimport
 import fi.vm.sade.hakurekisteri.rest.support.JournalTable
 import java.util.UUID
 
-import slick.driver.PostgresDriver.api._
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 
 import scala.xml.Elem
 import BatchState.BatchState
@@ -28,7 +28,7 @@ class ImportBatchTable(tag: Tag) extends JournalTable[ImportBatch, UUID, ImportB
   def bIndex: Index = index("i_import_batch_batch_type", batchType)
   def sIndex: Index = index("i_import_batch_state", state)
 
-  override def resourceShape: ShapedValue[(Rep[Elem], Rep[Option[String]], Rep[String], Any, Rep[BatchState], Rep[ImportStatus]), Nothing] =
+  override def resourceShape: ShapedValue[(Rep[Elem], Rep[Option[String]], Rep[String], Rep[String], Rep[BatchState], Rep[ImportStatus]), (Elem, Option[String], String, String, BatchState, ImportStatus)] =
     (data, externalId, batchType, source, state, status).shaped
   override def row(resource: ImportBatch): Option[ImportBatchTable.ImportBatchRow] = ImportBatch.unapply(resource)
   override val deletedValues: (String) => ImportBatchTable.ImportBatchRow = (lahde) => (<emptybatch/>, None, "deleted", lahde, BatchState.READY, ImportStatus())

@@ -6,8 +6,7 @@ import org.joda.time.DateTime
 
 import slick.lifted.ShapedValue
 import fi.vm.sade.hakurekisteri.rest.support.JournalTable
-import slick.driver.PostgresDriver.api._
-import slick.lifted
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 
 object OpiskeluoikeusRow {
   type OpiskeluoikeusType = (Long, Option[Long], String, String, String, String)
