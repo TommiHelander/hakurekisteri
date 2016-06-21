@@ -3,12 +3,12 @@ package fi.vm.sade.hakurekisteri.opiskelija
 import org.joda.time.DateTime
 import java.util.UUID
 
-import fi.vm.sade.hakurekisteri.rest.support.JournalTable
+import fi.vm.sade.hakurekisteri.rest.support.{HakurekisteriColumns, JournalTable}
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import slick.lifted.ShapedValue
 
 class OpiskelijaTable(tag: Tag)
-  extends JournalTable[Opiskelija, UUID, (String, String, String, String, DateTime, Option[DateTime], String)](tag, "opiskelija") {
+  extends JournalTable[Opiskelija, UUID, (String, String, String, String, DateTime, Option[DateTime], String)](tag, "opiskelija")(HakurekisteriColumns.uuidType) {
 
   def oppilaitosOid: Rep[String] = column[String]("oppilaitos_oid")
   def luokkataso: Rep[String] = column[String]("luokkataso")

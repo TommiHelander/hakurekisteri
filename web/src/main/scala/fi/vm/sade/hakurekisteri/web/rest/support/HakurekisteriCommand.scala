@@ -36,7 +36,7 @@ trait HakurekisteriCommand[R] extends Command with HakurekisteriTypeConverterFac
 
   type CommandTypeConverterFactory[T] = FileTypeConverterFactory[T]
 
-  override def typeConverterBuilder[I](tc: CommandTypeConverterFactory[_]) = ({
+  def typeConverterBuilder[I](tc : CommandTypeConverterFactory[_]) = ({
     case r: JsonValueReader => tc.resolveJson.asInstanceOf[TypeConverter[I, _]]
     case f: FileItemMapValueReader => tc.resolveFiles.asInstanceOf[TypeConverter[I, _]]
 
@@ -184,10 +184,10 @@ trait FileBindingImplicits extends JsonBindingImplicits {
     override def apply(s: S): Option[T] = None
   }
 
-  implicit val fileToString: TypeConverter[FileItem, String] = safe(f => scala.io.Source.fromInputStream(f.getInputStream).getLines().mkString("\n"))
+  implicit lazy val fileToString: TypeConverter[FileItem, String] = safe(f => scala.io.Source.fromInputStream(f.getInputStream).getLines().mkString("\n"))
 
 
-  implicit val fileToBoolean: TypeConverter[FileItem, Boolean] = cantConvert
+  implicit lazy val fileToBoolean: TypeConverter[FileItem, Boolean] = cantConvert
 
 
 

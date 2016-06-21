@@ -50,15 +50,3 @@ class ImportBatchSerializer extends CustomSerializer[ImportBatch] (format => (
   }
   )
 )
-
-import BatchState.BatchState
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
-
-object ImportBatchImplicits extends HakurekisteriJsonSupport {
-  implicit val batchStateColumnType = MappedColumnType.base[BatchState, String]({ c => c.toString }, { s => BatchState.withName(s)})
-
-  implicit val importstatusType = MappedColumnType.base[ImportStatus, JValue](
-    status => Extraction.decompose(status),
-    _.extract[ImportStatus]
-  )
-}
