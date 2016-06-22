@@ -1,6 +1,6 @@
 package fi.vm.sade.hakurekisteri.suoritus
 
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.simple._
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import org.joda.time.LocalDate
 import java.util.UUID
 

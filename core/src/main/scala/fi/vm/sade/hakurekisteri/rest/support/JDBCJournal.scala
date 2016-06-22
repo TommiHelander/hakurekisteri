@@ -59,7 +59,7 @@ object HakurekisteriDriver extends PostgresDriver {
 import HakurekisteriDriver.api._
 
 abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name: String)
-                                                                (implicit val idType: TypedType[I])
+                                                                (implicit val idType: BaseTypedType[I])
   extends Table[Delta[R, I]](tag, name) with HakurekisteriColumns {
 
   def resourceId = column[I]("resource_id")
@@ -97,7 +97,7 @@ abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name:
 
   def resourceShape: ShapedValue[_, ResourceRow]
 
-  def combinedShape = (resourceId, inserted, deleted).shaped zip resourceShape
+  private def combinedShape = (resourceId, inserted, deleted).shaped zip resourceShape
 
   def * : ProvenShape[Delta[R, I]] = {
     combinedShape <>((deltaShaper _).tupled, rowShaper)

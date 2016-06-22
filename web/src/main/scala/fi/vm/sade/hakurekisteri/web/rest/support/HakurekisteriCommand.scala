@@ -36,7 +36,7 @@ trait HakurekisteriCommand[R] extends Command with HakurekisteriTypeConverterFac
 
   type CommandTypeConverterFactory[T] = FileTypeConverterFactory[T]
 
-  def typeConverterBuilder[I](tc : CommandTypeConverterFactory[_]) = ({
+  override def typeConverterBuilder[I](tc : CommandTypeConverterFactory[_]) = ({
     case r: JsonValueReader => tc.resolveJson.asInstanceOf[TypeConverter[I, _]]
     case f: FileItemMapValueReader => tc.resolveFiles.asInstanceOf[TypeConverter[I, _]]
 

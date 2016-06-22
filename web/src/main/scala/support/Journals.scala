@@ -8,7 +8,7 @@ import fi.vm.sade.hakurekisteri.arvosana.{Arvosana, ArvosanaTable}
 import fi.vm.sade.hakurekisteri.batchimport.{ImportBatch, ImportBatchTable}
 import fi.vm.sade.hakurekisteri.opiskelija.{Opiskelija, OpiskelijaTable}
 import fi.vm.sade.hakurekisteri.opiskeluoikeus.{Opiskeluoikeus, OpiskeluoikeusTable}
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.simple._
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import fi.vm.sade.hakurekisteri.rest.support.JDBCJournal
 import fi.vm.sade.hakurekisteri.storage.repository.Journal
 import fi.vm.sade.hakurekisteri.storage.HakurekisteriTables._

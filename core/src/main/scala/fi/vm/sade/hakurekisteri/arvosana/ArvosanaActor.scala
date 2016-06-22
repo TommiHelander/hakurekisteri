@@ -75,7 +75,7 @@ import slick.lifted
 class ArvosanaJDBCActor(val journal: JDBCJournal[Arvosana, UUID, ArvosanaTable], poolSize: Int)
   extends ResourceActor[Arvosana, UUID] with JDBCRepository[Arvosana, UUID, ArvosanaTable] with JDBCService[Arvosana, UUID, ArvosanaTable] {
 
-  override def deduplicationQuery(i: Arvosana)(t: ArvosanaTable): Column[Boolean] = t.suoritus === i.suoritus &&
+  override def deduplicationQuery(i: Arvosana)(t: ArvosanaTable): Rep[Boolean] = t.suoritus === i.suoritus &&
     t.aine === i.aine &&
     t.lisatieto.getOrElse("") === i.lisatieto.getOrElse("") &&
     t.valinnainen === i.valinnainen &&
