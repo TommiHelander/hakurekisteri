@@ -9,7 +9,7 @@ import fi.vm.sade.hakurekisteri.arvosana.{Arvio410, Arvosana, ArvosanaTable}
 import fi.vm.sade.hakurekisteri.integration.VirkailijaRestClient
 import fi.vm.sade.hakurekisteri.integration.henkilo.HenkiloSearchResponse
 import fi.vm.sade.hakurekisteri.opiskelija.{Opiskelija, OpiskelijaTable}
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.simple._
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import fi.vm.sade.hakurekisteri.rest.support.JDBCJournal
 import fi.vm.sade.hakurekisteri.storage.repository.Updated
 import fi.vm.sade.hakurekisteri.suoritus.{Suoritus, SuoritusTable, VirallinenSuoritus, yksilollistaminen}
@@ -57,6 +57,7 @@ object CreateDevDb extends App {
     ) createOppilas(henkilo.oidHenkilo, aineet)
     println()
     system.shutdown()
+    db.close()
   }
 
   system.awaitTermination(15.seconds)

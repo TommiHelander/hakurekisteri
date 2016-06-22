@@ -38,6 +38,8 @@ class DbJournals(config: Config)(implicit val system: ActorSystem) extends Journ
     case _: javax.naming.NoInitialContextException => useDevelopmentH2
   }.get
 
+  system.registerOnTermination(database.close())
+
   override val suoritusJournal = new JDBCJournal[Suoritus, UUID, SuoritusTable](suoritusTable)
   override val opiskelijaJournal = new JDBCJournal[Opiskelija, UUID, OpiskelijaTable](opiskelijaTable)
   override val opiskeluoikeusJournal = new JDBCJournal[Opiskeluoikeus, UUID, OpiskeluoikeusTable](opiskeluoikeusTable)

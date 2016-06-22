@@ -12,8 +12,7 @@ import fi.vm.sade.hakurekisteri.suoritus._
 import org.h2.tools.RunScript
 import org.joda.time.LocalDate
 import org.scalatra.test.scalatest.ScalatraFunSuite
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver
-import HakurekisteriDriver.simple._
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.Duration
@@ -60,6 +59,7 @@ class JDBCJournalReloadSpec extends ScalatraFunSuite {
     val suoritukset = Await.result(suoritusFuture, Duration(30, TimeUnit.SECONDS))
 
     system.shutdown()
+    database.close()
     system.awaitTermination(15.seconds)
 
     suoritukset

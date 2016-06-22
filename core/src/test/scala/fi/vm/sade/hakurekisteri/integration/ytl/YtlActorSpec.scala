@@ -10,7 +10,7 @@ import fi.vm.sade.hakurekisteri.MockConfig
 import fi.vm.sade.hakurekisteri.arvosana._
 import fi.vm.sade.hakurekisteri.integration.DummyActor
 import fi.vm.sade.hakurekisteri.integration.henkilo.MockHenkiloActor
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.simple._
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import fi.vm.sade.hakurekisteri.rest.support.JDBCJournal
 import fi.vm.sade.hakurekisteri.storage.{DeleteResource, Identified}
 import fi.vm.sade.hakurekisteri.suoritus._
@@ -19,7 +19,6 @@ import org.scalatra.test.scalatest.ScalatraFunSuite
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.slick.lifted.TableQuery
 
 class YtlActorSpec extends ScalatraFunSuite {
 
@@ -93,6 +92,7 @@ class YtlActorSpec extends ScalatraFunSuite {
   override def stop(): Unit = {
     RunScript.execute("jdbc:h2:file:data/ytl-integration-test", "", "", "classpath:clear-h2.sql", Charset.forName("UTF-8"), false)
     system.shutdown()
+    database.close()
     system.awaitTermination(15.seconds)
     super.stop()
   }

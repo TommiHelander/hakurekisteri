@@ -6,7 +6,7 @@ import java.util.UUID
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.simple._
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import fi.vm.sade.hakurekisteri.rest.support.JDBCJournal
 import fi.vm.sade.hakurekisteri.storage.Identified
 import org.h2.tools.RunScript
@@ -45,6 +45,7 @@ class OpiskelijaActorSpec extends ScalatraFunSuite {
   override def stop(): Unit = {
     RunScript.execute("jdbc:h2:file:data/opiskelijatest", "", "", "classpath:clear-h2.sql", Charset.forName("UTF-8"), false)
     system.shutdown()
+    database.close()
     system.awaitTermination(15.seconds)
     super.stop()
   }

@@ -9,7 +9,7 @@ import fi.vm.sade.hakurekisteri.acceptance.tools.{ConfigurationSupport, FakeAuth
 import fi.vm.sade.hakurekisteri.batchimport._
 import fi.vm.sade.hakurekisteri.integration._
 import fi.vm.sade.hakurekisteri.integration.parametrit._
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.simple._
+import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import fi.vm.sade.hakurekisteri.rest.support.{HakurekisteriJsonSupport, JDBCJournal}
 import fi.vm.sade.hakurekisteri.storage.Identified
 import fi.vm.sade.hakurekisteri.web.batchimport.{ImportBatchResource, TiedonsiirtoOpen}
@@ -64,6 +64,7 @@ class ImportBatchResourceSpec extends ScalatraFunSuite with MockitoSugar with Di
   override def stop(): Unit = {
     RunScript.execute("jdbc:h2:file:data/importbatchtest", "", "", "classpath:clear-h2.sql", Charset.forName("UTF-8"), false)
     system.shutdown()
+    database.close()
     system.awaitTermination(15.seconds)
     super.stop()
   }
