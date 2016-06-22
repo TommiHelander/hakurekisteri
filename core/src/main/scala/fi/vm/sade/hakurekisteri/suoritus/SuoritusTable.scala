@@ -4,7 +4,7 @@ import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import org.joda.time.LocalDate
 import java.util.UUID
 
-import fi.vm.sade.hakurekisteri.rest.support.{HakurekisteriColumns, JournalTable}
+import fi.vm.sade.hakurekisteri.rest.support.JournalTable
 import java.sql.SQLDataException
 
 import fi.vm.sade.hakurekisteri.suoritus.yksilollistaminen.Yksilollistetty
@@ -17,7 +17,7 @@ object SuoritusRowTypes {
 import SuoritusRowTypes._
 
 
-class SuoritusTable(tag: Tag) extends JournalTable[Suoritus, UUID, SuoritusRow](tag, "suoritus")(HakurekisteriColumns.uuidType) {
+class SuoritusTable(tag: Tag) extends JournalTable[Suoritus, UUID, SuoritusRow](tag, "suoritus") {
   def myontaja = column[String]("myontaja")
   def henkiloOid = column[String]("henkilo_oid")
   def vahvistettu = column[Option[Boolean]]("vahvistettu")

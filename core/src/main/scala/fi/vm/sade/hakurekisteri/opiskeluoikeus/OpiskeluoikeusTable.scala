@@ -4,7 +4,7 @@ import java.util.UUID
 
 import org.joda.time.DateTime
 import slick.lifted.ShapedValue
-import fi.vm.sade.hakurekisteri.rest.support.{HakurekisteriColumns, JournalTable}
+import fi.vm.sade.hakurekisteri.rest.support.JournalTable
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 
 object OpiskeluoikeusRow {
@@ -13,7 +13,7 @@ object OpiskeluoikeusRow {
 
 import OpiskeluoikeusRow._
 
-class OpiskeluoikeusTable(tag: Tag) extends JournalTable[Opiskeluoikeus, UUID, OpiskeluoikeusType](tag, "opiskeluoikeus")(HakurekisteriColumns.uuidType) {
+class OpiskeluoikeusTable(tag: Tag) extends JournalTable[Opiskeluoikeus, UUID, OpiskeluoikeusType](tag, "opiskeluoikeus") {
   def alkuPaiva: Rep[Long] = column[Long]("alku_paiva")
   def loppuPaiva: Rep[Option[Long]] = column[Option[Long]]("loppu_paiva")
   def henkiloOid: Rep[String] = column[String]("henkilo_oid")

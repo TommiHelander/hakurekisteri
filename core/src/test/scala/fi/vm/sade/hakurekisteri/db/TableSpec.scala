@@ -2,7 +2,7 @@ package fi.vm.sade.hakurekisteri.db
 
 import org.joda.time.DateTime
 import org.scalatest.{FlatSpec, Matchers}
-import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
+import slick.driver.H2Driver.api._
 import slick.jdbc.meta.MTable
 import fi.vm.sade.hakurekisteri.batchimport.{BatchState, ImportBatch, ImportBatchTable, ImportStatus}
 import fi.vm.sade.hakurekisteri.storage.repository.Updated
@@ -21,7 +21,7 @@ class TableSpec extends FlatSpec with Matchers {
   val table = TableQuery[ImportBatchTable]
 
   it should "be able create itself" in {
-    val db = Database.forURL("jdbc:h2:mem:test", driver = "org.h2.Driver")
+    val db = getDb
 
     val tables = Await.result(db.run(
       table.schema.create.flatMap((u) => {
@@ -34,8 +34,12 @@ class TableSpec extends FlatSpec with Matchers {
     tables.size should be(1)
   }
 
+  def getDb: Database = {
+    Database.forURL("jdbc:h2:mem:test", driver = "org.h2.Driver")
+  }
+
   it should "be able to store updates" in {
-    val db = Database.forURL("jdbc:h2:mem:test", driver = "org.h2.Driver")
+    val db = getDb
     val xml = <batchdata>data</batchdata>
     val batch = ImportBatch(xml, Some("externalId"), "test", "test", BatchState.READY, ImportStatus()).identify(UUID.randomUUID())
 
@@ -49,7 +53,7 @@ class TableSpec extends FlatSpec with Matchers {
   }
 
   it should "be able to retrieve updates" in {
-    val db = Database.forURL("jdbc:h2:mem:test", driver = "org.h2.Driver")
+    val db = getDb
     val xml = <batchdata>data</batchdata>
     val batch = ImportBatch(xml, Some("externalId"), "test", "test", BatchState.READY, ImportStatus(new DateTime(), Some(new DateTime()), Map("foo" -> Set("foo exception")), Some(1), Some(0), Some(1))).identify(UUID.randomUUID())
     val table = TableQuery[ImportBatchTable]

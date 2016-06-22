@@ -1,6 +1,6 @@
 package fi.vm.sade.hakurekisteri.batchimport
 
-import fi.vm.sade.hakurekisteri.rest.support.{HakurekisteriColumns, JournalTable}
+import fi.vm.sade.hakurekisteri.rest.support.JournalTable
 import java.util.UUID
 
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
@@ -15,7 +15,7 @@ object ImportBatchTable {
 
 import ImportBatchTable._
 
-class ImportBatchTable(tag: Tag) extends JournalTable[ImportBatch, UUID, ImportBatchRow](tag, "import_batch")(HakurekisteriColumns.uuidType) {
+class ImportBatchTable(tag: Tag) extends JournalTable[ImportBatch, UUID, ImportBatchRow](tag, "import_batch") {
   def data: Rep[Elem] = column[Elem]("data")
   def externalId: Rep[Option[String]] = column[Option[String]]("external_id")
   def batchType: Rep[String] = column[String]("batch_type")
