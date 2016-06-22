@@ -1,6 +1,5 @@
 package fi.vm.sade.hakurekisteri.rest.support
 
-import java.sql.{PreparedStatement, ResultSet}
 import java.util.UUID
 
 import akka.actor.ActorSystem
@@ -14,7 +13,7 @@ import scala.compat.Platform
 import scala.language.existentials
 import scala.language.postfixOps
 import scala.reflect.ClassTag
-import slick.ast.{BaseTypedType, TypedType}
+import slick.ast.BaseTypedType
 import slick.driver.PostgresDriver
 import slick.jdbc.JdbcType
 import slick.jdbc.meta.MTable
@@ -27,7 +26,7 @@ import scala.xml.Elem
 
 object HakurekisteriDriver extends PostgresDriver {
 
-  trait CustomImplicits extends super.Implicits with HakurekisteriJsonSupport {
+  trait CustomAPI extends API with HakurekisteriJsonSupport {
     class JValueType(implicit tmd: JdbcType[String], override val classTag: ClassTag[JValue])
       extends HakurekisteriDriver.MappedJdbcType[JValue, String] with BaseTypedType[JValue] {
 
@@ -53,7 +52,7 @@ object HakurekisteriDriver extends PostgresDriver {
 
   }
 
-  override val api = new API with CustomImplicits {}
+  override val api = new CustomAPI {}
 }
 
 import HakurekisteriDriver.api._
@@ -105,14 +104,17 @@ abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name:
 }
 
 import scala.concurrent.duration._
+import slick.lifted
 
-class JDBCJournal[R <: Resource[I, R], I, T <: JournalTable[R, I, _]](val table: TableQuery[T])
+class JDBCJournal[R <: Resource[I, R], I, T <: JournalTable[R, I, _]](val table: lifted.TableQuery[T])
                                                                      (implicit val db: Database, val idType: BaseTypedType[I], implicit val system: ActorSystem)
   extends Journal[R, I] {
+
 
   implicit val ec: ExecutionContext = system.dispatcher
   val log = Logging.getLogger(system, this)
   lazy val tableName = table.baseTableRow.tableName
+  val queryTimeout: Duration = 1.minute
 
   Await.result(db.run(MTable.getTables(tableName).flatMap((t: Vector[MTable]) => {
     if (t.isEmpty) {
@@ -120,26 +122,20 @@ class JDBCJournal[R <: Resource[I, R], I, T <: JournalTable[R, I, _]](val table:
     } else {
       DBIO.seq()
     }
-  })), 30.seconds)
+  })), queryTimeout)
 
   log.debug(s"started ${getClass.getSimpleName} with table $tableName")
 
-  override def addModification(o: Delta[R, I]): Unit = ???
-    //TODO
-    /*
-    db withSession (implicit session =>
+  override def addModification(o: Delta[R, I]): Unit = {
+    Await.result(db.run(DBIO.seq(
       table += o
-    )
-    */
-
-  override def journal(latestQuery: Option[Long]): Seq[Delta[R, I]] = latestQuery match {
-    case None =>
-      Await.result(db.run(latestResources.result), 2.minutes)
-    case Some(lat) =>
-      Await.result(db.run(latestResources.filter(_.inserted >= lat).result), 2.minutes)
+    )), queryTimeout)
   }
 
-  import slick.lifted
+  override def journal(latestQuery: Option[Long]): Seq[Delta[R, I]] = latestQuery match {
+    case None => Await.result(db.run(latestResources.result), queryTimeout)
+    case Some(lat) => Await.result(db.run(latestResources.filter(_.inserted >= lat).result), queryTimeout)
+  }
 
   val resourcesWithVersions = table.groupBy[lifted.Rep[I], I, lifted.Rep[I], T](_.resourceId)
 
