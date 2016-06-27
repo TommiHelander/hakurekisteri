@@ -21,8 +21,7 @@ class OpiskeluoikeusTable(tag: Tag) extends JournalTable[Opiskeluoikeus, UUID, O
   def myontaja: Rep[String] = column[String]("myontaja")
 
 
-  override def resourceShape: ShapedValue[(Rep[Long], Rep[Option[Long]], Rep[String], Rep[String], Rep[String], Rep[String]), OpiskeluoikeusType] =
-    (alkuPaiva, loppuPaiva, henkiloOid, komo, myontaja, source).shaped
+  override def resourceShape = (alkuPaiva, loppuPaiva, henkiloOid, komo, myontaja, source).shaped
 
   override def row(oo: Opiskeluoikeus): Option[OpiskeluoikeusType] = Some(
     oo.aika.alku.getMillis,

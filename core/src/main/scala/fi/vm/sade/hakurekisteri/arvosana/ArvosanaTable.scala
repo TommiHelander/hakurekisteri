@@ -16,7 +16,7 @@ class ArvosanaTable(tag: Tag) extends JournalTable[Arvosana, UUID, (UUID, String
   def valinnainen = column[Boolean]("valinnainen")
   def pisteet = column[Option[Int]]("pisteet")
   def myonnetty = column[Option[String]]("myonnetty")
-  def lahdeArvot = column[Map[String,String]]("lahde_arvot")
+  def lahdeArvot = column[Map[String,String]]("lahde_arvot", O.SqlType("TEXT"))
   def jarjestys = column[Option[Int]]("jarjestys")
 
   override def resourceShape = (suoritus, arvosana, asteikko, aine, lisatieto, valinnainen, pisteet, myonnetty, source, lahdeArvot, jarjestys).shaped

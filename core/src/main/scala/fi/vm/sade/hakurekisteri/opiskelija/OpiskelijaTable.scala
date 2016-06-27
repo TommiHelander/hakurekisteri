@@ -19,8 +19,7 @@ class OpiskelijaTable(tag: Tag)
 
   val deletedValues = (lahde: String) =>  ("", "", "", "", DateTime.now(), None, lahde)
 
-  override def resourceShape: ShapedValue[(Rep[String], Rep[String], Rep[String], Rep[String], Rep[DateTime], Rep[Option[DateTime]], Rep[String]), (String, String, String, String, DateTime, Option[DateTime], String)] =
-    (oppilaitosOid, luokkataso, luokka, henkiloOid, alkuPaiva, loppuPaiva, source).shaped
+  override def resourceShape = (oppilaitosOid, luokkataso, luokka, henkiloOid, alkuPaiva, loppuPaiva, source).shaped
 
   override def row(o: Opiskelija): Option[(String, String, String, String, DateTime, Option[DateTime], String)] = Opiskelija.unapply(o)
 

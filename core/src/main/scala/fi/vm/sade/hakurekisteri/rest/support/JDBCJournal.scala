@@ -20,6 +20,7 @@ class JDBCJournal[R <: Resource[I, R], I, T <: JournalTable[R, I, _]](val table:
   lazy val tableName = table.baseTableRow.tableName
   val queryTimeout: Duration = 1.minute
 
+  /*
   Await.result(db.run(MTable.getTables(tableName).flatMap((t: Vector[MTable]) => {
     if (t.isEmpty) {
       DBIO.seq(schemaActionExtensionMethods(tableQueryToTableQueryExtensionMethods(table).schema).create)
@@ -27,6 +28,7 @@ class JDBCJournal[R <: Resource[I, R], I, T <: JournalTable[R, I, _]](val table:
       DBIO.seq()
     }
   })), queryTimeout)
+  */
 
   log.debug(s"started ${getClass.getSimpleName} with table $tableName")
 
