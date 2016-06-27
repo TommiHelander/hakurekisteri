@@ -32,7 +32,7 @@ class TableSpec extends FlatSpec with Matchers {
   }
 
   def getDb: Database = {
-    Database.forURL("jdbc:postgresql://localhost:5432/suoritusrekisteri", driver = "org.postgresql.Driver", user = "tomi.katajanheimo")
+    Database.forURL("jdbc:postgresql://localhost:5432/suoritusrekisteri", driver = "org.postgresql.Driver")
   }
 
   it should "be able to store updates" in {
