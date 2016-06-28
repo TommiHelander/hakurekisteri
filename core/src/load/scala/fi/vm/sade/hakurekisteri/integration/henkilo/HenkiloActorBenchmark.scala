@@ -77,8 +77,7 @@ object HenkiloActorBenchmark extends PerformanceTest.OfflineReport {
           henkiloActor = Some(ha)
       } tearDown {
         _ =>
-          system.foreach(_.shutdown())
-          system.foreach(_.awaitTermination())
+          system.foreach(s => Await.result(s.terminate(), 15.seconds))
       } in {
         case (henkiloSeq, _) =>
           println(s"sending ${henkiloSeq.size} henkilos to ${henkiloActor.get}")

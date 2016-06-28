@@ -121,7 +121,7 @@ object ArvosanaSiirtoLoadBenchmark extends PerformanceTest.Quickbenchmark {
 
     def start(b: SerializableBatch) {
       if (systemHolder.isDefined) {
-        system.shutdown()
+        Await.result(system.terminate(), 15.seconds)
       }
       systemHolder = Some(ActorSystem(s"perf-test-${UUID.randomUUID()}"))
       startActors(b: SerializableBatch)
@@ -165,8 +165,7 @@ object ArvosanaSiirtoLoadBenchmark extends PerformanceTest.Quickbenchmark {
           registers.start(b)
       } tearDown {
         _ =>
-          registers.system.shutdown()
-          registers.system.awaitTermination()
+          Await.result(registers.system.terminate(), 15.seconds)
       } in {
         b =>
           processSingleBatch(registers, b)
@@ -231,8 +230,7 @@ object ArvosanaSiirtoLoadBenchmark extends PerformanceTest.Quickbenchmark {
           registers.start(b)
       } tearDown {
         _ =>
-          registers.system.shutdown()
-          registers.system.awaitTermination()
+          Await.result(registers.system.terminate(), 15.seconds)
       } in {
         b =>
           processSingleBatch(registers, b)

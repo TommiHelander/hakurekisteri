@@ -4,22 +4,22 @@ import java.util.UUID
 
 import akka.actor.Actor.Receive
 import akka.actor.{Actor, ActorSystem, Props}
-import akka.pattern.ask;
+import akka.pattern.ask
 import fi.vm.sade.hakurekisteri.KomoOids
 import fi.vm.sade.hakurekisteri.acceptance.tools.FakeAuthorizer
-import fi.vm.sade.hakurekisteri.integration.parametrit.{ParameterActor, IsRestrictionActive}
+import fi.vm.sade.hakurekisteri.integration.parametrit.{IsRestrictionActive, ParameterActor}
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriJsonSupport
 import fi.vm.sade.hakurekisteri.storage.repository.{InMemJournal, Updated}
 import fi.vm.sade.hakurekisteri.suoritus._
 import fi.vm.sade.hakurekisteri.tools.Peruskoulu
 import fi.vm.sade.hakurekisteri.web.rest.support._
-import fi.vm.sade.hakurekisteri.web.suoritus.{SuoritusResource, CreateSuoritusCommand, SuoritusSwaggerApi}
+import fi.vm.sade.hakurekisteri.web.suoritus.{CreateSuoritusCommand, SuoritusResource, SuoritusSwaggerApi}
 import org.joda.time.LocalDate
 import org.json4s.jackson.Serialization._
 import org.scalatra.swagger.Swagger
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
@@ -65,7 +65,6 @@ class SuoritusServletSpec extends ScalatraFunSuite {
   }
 
   override def stop(): Unit = {
-    system.shutdown()
-    system.awaitTermination(15.seconds)
+    Await.result(system.terminate(), 15.seconds)
   }
 }

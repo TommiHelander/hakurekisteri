@@ -2,7 +2,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import com.earldouglas.xsbtwebplugin._
-import com.mojolly.scalate.ScalatePlugin._
 import sbt.Keys._
 import sbt._
 
@@ -28,7 +27,6 @@ object HakurekisteriBuild extends Build {
 
   val ScalatraStack = Seq(
     "org.scalatra" %% "scalatra",
-    "org.scalatra" %% "scalatra-scalate",
     "org.scalatra" %% "scalatra-json",
     "org.scalatra" %% "scalatra-swagger",
     "org.scalatra" %% "scalatra-commands")
@@ -55,8 +53,8 @@ object HakurekisteriBuild extends Build {
       "net.sf.ehcache" % "ehcache-jgroupsreplication" % "1.5",
       "org.jasig.cas" % "cas-client-support-distributed-ehcache" % "3.1.10" exclude("net.sf.ehcache", "ehcache"))
 
-  val akkaVersion = "2.3.6"
-  val AkkaStack = Seq("akka-testkit", "akka-slf4j","akka-camel").map("com.typesafe.akka" %% _ % akkaVersion)
+  val akkaVersion = "2.4.7"
+  val AkkaStack = Seq("akka-testkit", "akka-slf4j", "akka-actor").map("com.typesafe.akka" %% _ % akkaVersion)
 
   val webDeps =  Seq(
     "org.eclipse.jetty" % "jetty-webapp" % "9.2.1.v20140609" % "container;test",
@@ -69,7 +67,7 @@ object HakurekisteriBuild extends Build {
     "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.5",
     "org.scalaz" %% "scalaz-core" % "7.2.3",
     "org.scalaz.stream" %% "scalaz-stream" % "0.7.2",
-    "org.slf4j" % "slf4j-api" % "1.7.10",
+    "org.slf4j" % "slf4j-api" % "1.7.16",
     "org.json4s" %% "json4s-ast" % "3.3.0",
     "org.json4s" %% "json4s-core" % "3.3.0",
     "org.json4s" %% "json4s-ext" % "3.3.0",
@@ -82,9 +80,6 @@ object HakurekisteriBuild extends Build {
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.2",
     "org.apache.poi" % "poi" % "3.10.1",
     "org.apache.poi" % "poi-ooxml" % "3.10.1" exclude("xml-apis", "xml-apis"),
-    "org.apache.activemq" % "activemq-all" % "5.9.1",
-    "org.apache.camel" % "camel-jms" % "2.13.0",
-    "fi.vm.sade.log" % "log-client" % "7.0",
     "fi.vm.sade" % "auditlogger" % "5.0.0-SNAPSHOT",
     "fr.janalyse" %% "janalyse-ssh" % "0.9.14",
     "fi.vm.sade" %% "scala-utils" % "0.1.0-SNAPSHOT",
@@ -185,7 +180,7 @@ object HakurekisteriBuild extends Build {
       s"hakurekisteri-web",
       file("web"),
       configurations = Seq(LoadSpecs, IntegrationTest),
-      settings = WebPlugin.webSettings ++ scalateSettings
+      settings = WebPlugin.webSettings
         ++ inConfig(LoadSpecs)(Defaults.testSettings)
         ++ inConfig(LoadSpecs)(Seq(
           testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"),

@@ -26,7 +26,7 @@ import org.scalatra.test.scalatest.ScalatraFunSuite
 import siirto.{PerustiedotXmlConverter, SchemaDefinition}
 
 import scala.compat.Platform
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 import scala.xml.Elem
 
@@ -63,9 +63,8 @@ class ImportBatchResourceSpec extends ScalatraFunSuite with MockitoSugar with Di
 
   override def stop(): Unit = {
     RunScript.execute("jdbc:h2:file:data/importbatchtest", "", "", "classpath:clear-h2.sql", Charset.forName("UTF-8"), false)
-    system.shutdown()
+    Await.result(system.terminate(), 15.seconds)
     database.close()
-    system.awaitTermination(15.seconds)
     super.stop()
   }
 

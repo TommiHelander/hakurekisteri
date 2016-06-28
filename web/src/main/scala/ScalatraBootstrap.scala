@@ -19,7 +19,7 @@ import fi.vm.sade.hakurekisteri.web.ensikertalainen.EnsikertalainenResource
 import fi.vm.sade.hakurekisteri.web.hakija.{HakijaResource, HakijaResourceV2}
 import fi.vm.sade.hakurekisteri.web.haku.HakuResource
 import fi.vm.sade.hakurekisteri.web.healthcheck.HealthcheckResource
-import fi.vm.sade.hakurekisteri.web.integration.virta.{VirtaSuoritusResource, VirtaResource}
+import fi.vm.sade.hakurekisteri.web.integration.virta.{VirtaResource, VirtaSuoritusResource}
 import fi.vm.sade.hakurekisteri.web.integration.ytl.YtlResource
 import fi.vm.sade.hakurekisteri.web.kkhakija.KkHakijaResource
 import fi.vm.sade.hakurekisteri.web.opiskelija.{CreateOpiskelijaCommand, OpiskelijaSwaggerApi}
@@ -48,7 +48,7 @@ import org.springframework.web.filter.DelegatingFilterProxy
 import siirto._
 
 import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{Await, ExecutionContextExecutor}
 
 class ScalatraBootstrap extends LifeCycle {
   implicit val swagger: Swagger = new HakurekisteriSwagger
@@ -155,8 +155,7 @@ class ScalatraBootstrap extends LifeCycle {
   override def destroy(context: ServletContext) {
     import scala.concurrent.duration._
 
-    system.shutdown()
-    system.awaitTermination(15.seconds)
+    Await.result(system.terminate(), 15.seconds)
 
     OPHSecurity.destroy(context)
   }

@@ -91,9 +91,8 @@ class YtlActorSpec extends ScalatraFunSuite {
 
   override def stop(): Unit = {
     RunScript.execute("jdbc:h2:file:data/ytl-integration-test", "", "", "classpath:clear-h2.sql", Charset.forName("UTF-8"), false)
-    system.shutdown()
+    Await.result(system.terminate(), 15.seconds)
     database.close()
-    system.awaitTermination(15.seconds)
     super.stop()
   }
 

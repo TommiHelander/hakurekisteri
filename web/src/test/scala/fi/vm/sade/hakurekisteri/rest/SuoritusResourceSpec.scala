@@ -75,8 +75,7 @@ class SuoritusResourceWithOPHSpec extends ScalatraFunSuite with MockitoSugar wit
 
 
   override def stop(): Unit = {
-    system.shutdown()
-    system.awaitTermination(15.seconds)
+    Await.result(system.terminate(), 15.seconds)
     super.stop()
   }
 
@@ -118,8 +117,7 @@ class SuoritusResourceWithOPOSpec extends ScalatraFunSuite with MockitoSugar wit
 
 
   override def stop(): Unit = {
-    system.shutdown()
-    system.awaitTermination(15.seconds)
+    Await.result(system.terminate(), 15.seconds)
     super.stop()
   }
 

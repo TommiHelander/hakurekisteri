@@ -10,9 +10,7 @@ import scala.compat.Platform
 import scala.language.{existentials, postfixOps}
 
 abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name: String)
-                                                                (implicit val idType: BaseTypedType[I])
-  extends Table[Delta[R, I]](tag, name) with HakurekisteriColumns {
-
+                                                                (implicit val idType: BaseTypedType[I]) extends Table[Delta[R, I]](tag, name) {
   def resourceId = column[I]("resource_id")(idType)
   def source = column[String]("source")
   def inserted = column[Long]("inserted")

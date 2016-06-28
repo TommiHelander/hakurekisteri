@@ -7,10 +7,11 @@ import fi.vm.sade.hakurekisteri.acceptance.tools.FakeAuthorizer
 import fi.vm.sade.hakurekisteri.arvosana._
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriJsonSupport
 import fi.vm.sade.hakurekisteri.storage.repository.{InMemJournal, Updated}
-import fi.vm.sade.hakurekisteri.web.arvosana.{EmptyLisatiedotResource}
+import fi.vm.sade.hakurekisteri.web.arvosana.EmptyLisatiedotResource
 import fi.vm.sade.hakurekisteri.web.rest.support._
 import org.scalatra.test.scalatest.ScalatraFunSuite
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
@@ -41,7 +42,6 @@ class ArvosanaEmptyLisatietoSpec extends ScalatraFunSuite {
   }
 
   override def stop(): Unit = {
-    system.shutdown()
-    system.awaitTermination(15.seconds)
+    Await.result(system.terminate(), 15.seconds)
   }
 }

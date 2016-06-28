@@ -17,7 +17,7 @@ import fi.vm.sade.hakurekisteri.{Config, Oids}
 import generators.DataGen
 import org.joda.time.DateTime
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.Try
 
@@ -56,11 +56,9 @@ object CreateDevDb extends App {
       henkilo <- henkilos.results
     ) createOppilas(henkilo.oidHenkilo, aineet)
     println()
-    system.shutdown()
+    Await.result(system.terminate(), 15.seconds)
     db.close()
   }
-
-  system.awaitTermination(15.seconds)
 
   def createOppilas(oid:String, aineet: Set[String]) {
     val suoritus = UUID.randomUUID()

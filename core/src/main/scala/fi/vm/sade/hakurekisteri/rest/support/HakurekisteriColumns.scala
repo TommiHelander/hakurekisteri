@@ -38,5 +38,3 @@ trait HakurekisteriColumns extends HakurekisteriJsonSupport {
   implicit def elemType = MappedColumnType.base[Elem, String](_.toString, SafeXML.loadString)
 
 }
-
-object HakurekisteriColumns extends HakurekisteriColumns

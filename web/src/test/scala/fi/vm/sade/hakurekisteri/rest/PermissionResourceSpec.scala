@@ -1,11 +1,11 @@
 package fi.vm.sade.hakurekisteri.rest
 
-import akka.actor.{Actor, Props, ActorSystem}
+import akka.actor.{Actor, ActorSystem, Props}
 import akka.pattern.pipe
 import fi.vm.sade.hakurekisteri.PohjakoulutusOids
 import fi.vm.sade.hakurekisteri.opiskelija.{Opiskelija, OpiskelijaHenkilotQuery}
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriJsonSupport
-import fi.vm.sade.hakurekisteri.suoritus.{yksilollistaminen, VirallinenSuoritus, SuoritusHenkilotQuery}
+import fi.vm.sade.hakurekisteri.suoritus.{SuoritusHenkilotQuery, VirallinenSuoritus, yksilollistaminen}
 import fi.vm.sade.hakurekisteri.web.permission.{PermissionCheckResponse, PermissionResource}
 import fi.vm.sade.hakurekisteri.web.rest.support.HakurekisteriSwagger
 import org.joda.time.{DateTime, LocalDate}
@@ -13,7 +13,8 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.mock.MockitoSugar
 import org.scalatra.swagger.Swagger
 import org.scalatra.test.scalatest.ScalatraFunSuite
-import scala.concurrent.{ExecutionContext, Future}
+
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import org.json4s.jackson.Serialization._
 
@@ -153,8 +154,7 @@ class PermissionResourceSpec extends ScalatraFunSuite with MockitoSugar with Bef
   }
 
   override def afterAll() = {
-    system.shutdown()
-    system.awaitTermination(10.seconds)
+    Await.result(system.terminate(), 15.seconds)
   }
 
 }
