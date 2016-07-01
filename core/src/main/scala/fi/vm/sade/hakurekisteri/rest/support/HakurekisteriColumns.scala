@@ -10,6 +10,7 @@ import fi.vm.sade.hakurekisteri.suoritus.yksilollistaminen.Yksilollistetty
 import fi.vm.sade.hakurekisteri.tools.SafeXML
 import org.joda.time.{DateTime, LocalDate}
 import org.json4s.Extraction._
+import org.json4s.Formats
 import org.json4s.JsonAST.JValue
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -17,7 +18,9 @@ import org.json4s.jackson.JsonMethods._
 import scala.xml.Elem
 
 
-trait HakurekisteriColumns extends HakurekisteriJsonSupport {
+trait HakurekisteriColumns {
+
+  implicit val formats: Formats = HakurekisteriJsonSupport.format
 
   implicit def datetimeLong = MappedColumnType.base[DateTime, Long](_.getMillis, new DateTime(_))
 
@@ -32,8 +35,6 @@ trait HakurekisteriColumns extends HakurekisteriJsonSupport {
   implicit def importstatusType = MappedColumnType.base[ImportStatus, String](data => compact(decompose(data)), extract[ImportStatus](_))
 
   implicit def jvalueType = MappedColumnType.base[JValue, String](data => compact(render(data)), parse(_))
-
-  implicit def uuidType = MappedColumnType.base[UUID, String](_.toString, UUID.fromString)
 
   implicit def elemType = MappedColumnType.base[Elem, String](_.toString, SafeXML.loadString)
 

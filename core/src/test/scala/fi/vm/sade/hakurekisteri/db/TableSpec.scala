@@ -19,6 +19,8 @@ class TableSpec extends FlatSpec with Matchers {
 
   val table = TableQuery[ImportBatchTable]
 
+  println(table.baseTableRow.tableName)
+
   it should "be able create itself" in {
     val db = getDb
 

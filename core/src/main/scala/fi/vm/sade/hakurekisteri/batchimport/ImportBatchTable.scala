@@ -1,19 +1,19 @@
 package fi.vm.sade.hakurekisteri.batchimport
 
-import fi.vm.sade.hakurekisteri.rest.support.JournalTable
 import java.util.UUID
 
+import fi.vm.sade.hakurekisteri.batchimport.BatchState.BatchState
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
+import fi.vm.sade.hakurekisteri.rest.support.JournalTable
+import slick.lifted.Index
 
 import scala.xml.Elem
-import BatchState.BatchState
-import slick.lifted.Index
 
 object ImportBatchTable {
   type ImportBatchRow = (Elem, Option[String], String, String, BatchState, ImportStatus)
 }
 
-import ImportBatchTable._
+import fi.vm.sade.hakurekisteri.batchimport.ImportBatchTable._
 
 class ImportBatchTable(tag: Tag) extends JournalTable[ImportBatch, UUID, ImportBatchRow](tag, "import_batch") {
   def data: Rep[Elem] = column[Elem]("data", O.SqlType("TEXT"))
@@ -27,8 +27,8 @@ class ImportBatchTable(tag: Tag) extends JournalTable[ImportBatch, UUID, ImportB
   def sIndex: Index = index("i_import_batch_state", state)
 
   override def resourceShape = (data, externalId, batchType, source, state, status).shaped
-  override def row(resource: ImportBatch): Option[ImportBatchTable.ImportBatchRow] = ImportBatch.unapply(resource)
-  override val deletedValues: (String) => ImportBatchTable.ImportBatchRow = (lahde) => (<emptybatch/>, None, "deleted", lahde, BatchState.READY, ImportStatus())
-  override val resource: (ImportBatchTable.ImportBatchRow) => ImportBatch = (ImportBatch.apply _).tupled
-  override val extractSource: (ImportBatchTable.ImportBatchRow) => String = _._4
+  override def row(resource: ImportBatch): Option[ImportBatchRow] = ImportBatch.unapply(resource)
+  override val deletedValues: String => ImportBatchRow = lahde => (<emptybatch/>, None, "deleted", lahde, BatchState.READY, ImportStatus())
+  override val resource: ImportBatchRow => ImportBatch = (ImportBatch.apply _).tupled
+  override val extractSource: ImportBatchRow => String = _._4
 }

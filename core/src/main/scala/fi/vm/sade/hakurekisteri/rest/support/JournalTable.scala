@@ -19,11 +19,11 @@ abstract class JournalTable[R <: Resource[I, R], I, ResourceRow](tag: Tag, name:
 
   type JournalRow = (I, Long, Boolean)
 
-  val resource: ResourceRow => R
+  def resource: ResourceRow => R
 
-  val extractSource: ResourceRow => String
+  def extractSource: ResourceRow => String
 
-  val deletedValues: (String) => ResourceRow
+  def deletedValues: String => ResourceRow
 
   def row(resource: R): Option[ResourceRow]
 

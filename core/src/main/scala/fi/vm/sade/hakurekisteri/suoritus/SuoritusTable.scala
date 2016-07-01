@@ -45,9 +45,9 @@ class SuoritusTable(tag: Tag) extends JournalTable[Suoritus, UUID, SuoritusRow](
 
   }
 
-  override val deletedValues =(lahde: String) =>  ("", "", Some(true), None, None, None, None, None, None, None, None, None, lahde)
+  override val deletedValues = (lahde: String) =>  ("", "", Some(true), None, None, None, None, None, None, None, None, None, lahde)
 
-  override val resource: (SuoritusRow) => Suoritus = {
+  override val resource: SuoritusRow => Suoritus = {
     case (myontaja, henkiloOid, vahvistettu, Some(komo), Some(tila), Some(valmistuminen), Some(yks), Some(suoritusKieli), _, _, _, _,  source) =>
       VirallinenSuoritus(komo, myontaja, tila, valmistuminen, henkiloOid, yks, suoritusKieli, vahv = vahvistettu.getOrElse(true), lahde = source)
     case (myontaja, henkiloOid, vahvistettu, _, _, _, _, _, Some(kuvaus), Some(vuosi), Some(tyyppi), Some(index), source)  =>
@@ -57,6 +57,6 @@ class SuoritusTable(tag: Tag) extends JournalTable[Suoritus, UUID, SuoritusRow](
 
   case class InvalidSuoritusDataException(row: SuoritusRow) extends SQLDataException(s"invalid data in database ${row.toString()}")
 
-  override val extractSource: (SuoritusRowTypes.SuoritusRow) => String = _._13
+  override val extractSource: SuoritusRow => String = _._13
 }
 

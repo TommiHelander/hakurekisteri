@@ -32,7 +32,7 @@ class OpiskeluoikeusTable(tag: Tag) extends JournalTable[Opiskeluoikeus, UUID, O
     oo.source
     )
 
-  override val deletedValues: (String) => OpiskeluoikeusType = (lahde) => (
+  override val deletedValues: String => OpiskeluoikeusType = (lahde) => (
     0L,
     None,
     "",
@@ -40,9 +40,9 @@ class OpiskeluoikeusTable(tag: Tag) extends JournalTable[Opiskeluoikeus, UUID, O
     "",
     lahde
     )
-  override val resource: (OpiskeluoikeusType) => Opiskeluoikeus = {
+  override val resource: OpiskeluoikeusType => Opiskeluoikeus = {
     case  (alkuPaiva: Long, loppuPaiva: Option[Long], henkiloOid: String, komo: String, myontaja: String, source) =>
       Opiskeluoikeus(new DateTime(alkuPaiva), loppuPaiva.map(new DateTime(_)), henkiloOid, komo, myontaja, source)
   }
-  override val extractSource: (OpiskeluoikeusRow.OpiskeluoikeusType) => String = _._6
+  override val extractSource: OpiskeluoikeusType => String = _._6
 }

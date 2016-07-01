@@ -32,7 +32,7 @@ class ArvosanaTable(tag: Tag) extends JournalTable[Arvosana, UUID, (UUID, String
       Some(a.suoritus, pisteet.toString, Arvio.ASTEIKKO_OSAKOE, a.aine, a.lisatieto, a.valinnainen, None, a.myonnetty.map(_.toString), a.source, a.lahdeArvot, a.jarjestys)
   }
 
-  override val deletedValues: (String) => (UUID, String, String, String, Option[String], Boolean, Option[Int], Option[String], String, Map[String,String], Option[Int]) =
+  override val deletedValues: String => (UUID, String, String, String, Option[String], Boolean, Option[Int], Option[String], String, Map[String,String], Option[Int]) =
     (lahde: String) => (UUID.fromString("de1e7edd-e1e7-edde-1e7e-dde1e7ed1111"), "","", "", None, false, None, None, lahde, Map(), None)
   override val resource: ((UUID, String, String, String, Option[String], Boolean, Option[Int], Option[String], String, Map[String,String], Option[Int])) => Arvosana =
     (arvosanaResource _).tupled
