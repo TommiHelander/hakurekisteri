@@ -72,7 +72,7 @@ class FutureOrganizationHierarchy[A <: Resource[I, A] :Manifest, I: Manifest ](f
       ) yield result
       checked pipeTo sender
 
-    case message: AnyRef =>
+    case message: Any =>
       filteredActor forward message
   }
 

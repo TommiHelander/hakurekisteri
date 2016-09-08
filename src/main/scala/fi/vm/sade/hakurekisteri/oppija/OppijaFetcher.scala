@@ -89,7 +89,7 @@ trait OppijaFetcher {
 
   private def fetchTodistukset(suoritukset: Seq[Suoritus with Identified[UUID]])(implicit user: User): Future[Seq[Todistus]] =
     for (
-      arvosanat <- (rekisterit.arvosanaRekisteri ? AuthorizedQuery(ArvosanatQuery(suoritukset.map(_.id).toSet), user))
+      arvosanat <- (rekisterit.arvosanaRekisteri ? ArvosanatQuery(suoritukset.map(_.id).toSet))
         .mapTo[Seq[Arvosana]]
         .map(_.groupBy(_.suoritus))
     ) yield suoritukset.map(suoritus => Todistus(suoritus, arvosanat.getOrElse(suoritus.id, Seq())))
