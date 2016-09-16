@@ -27,7 +27,7 @@ import fi.vm.sade.hakurekisteri.web.proxies._
 import fi.vm.sade.hakurekisteri.web.rekisteritiedot.RekisteritiedotResource
 import fi.vm.sade.hakurekisteri.web.rest.support._
 import fi.vm.sade.hakurekisteri.web.restrictions.RestrictionsResource
-import fi.vm.sade.hakurekisteri.web.suoritus.VirallinenSuoritusResource
+import fi.vm.sade.hakurekisteri.web.suoritus.{VapaamuotoinenSuoritusResource, VirallinenSuoritusResource}
 import fi.vm.sade.hakurekisteri.{Config, ProductionServerConfig}
 import gui.GuiServlet
 import org.json4s._
@@ -105,6 +105,7 @@ class ScalatraBootstrap extends LifeCycle {
     ("/rest/v1/oppijat", "rest/v1/oppijat") -> new OppijaResource(authorizedRegisters, integrations.hakemusService, koosteet.ensikertalainen),
     ("/rest/v1/opiskeluoikeudet", "rest/v1/opiskeluoikeudet") -> new HakurekisteriResource[Opiskeluoikeus, CreateOpiskeluoikeusCommand](authorizedRegisters.opiskeluoikeusRekisteri, OpiskeluoikeusQuery(_)) with OpiskeluoikeusSwaggerApi with HakurekisteriCrudCommands[Opiskeluoikeus, CreateOpiskeluoikeusCommand] with SecuritySupport,
     ("/rest/v1/suoritukset", "rest/v1/suoritukset") -> new VirallinenSuoritusResource(authorizedRegisters.suoritusRekisteri, integrations.parametrit, SuoritusQuery(_)),
+    ("/rest/v1/vapaamuotoisetSuoritukset", "rest/v1/vapaamuotoisetSuoritukset") -> new VapaamuotoinenSuoritusResource(authorizedRegisters.suoritusRekisteri, integrations.parametrit, SuoritusQuery(_)),
     ("/rest/v1/virta/henkilot", "rest/v1/virta/henkilot") -> new VirtaSuoritusResource(integrations.virtaResource, integrations.hakuAppPermissionChecker, integrations.henkilo),
     ("/rest/v1/rajoitukset", "rest/v1/rajoitukset") -> new RestrictionsResource(integrations.parametrit),
     ("/rest/v1/rekisteritiedot", "rest/v1/rekisteritiedot") -> new RekisteritiedotResource(authorizedRegisters, integrations.hakemusService, koosteet.ensikertalainen),

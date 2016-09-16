@@ -58,6 +58,7 @@ class AuthorizedRegisters(unauthorized: Registers, system: ActorSystem, config: 
     opiskeluoikeus: Option[UUID],
     vahv: Boolean,
     lahde: String) => myontaja
+    case vs: VapaamuotoinenSuoritus => vs.myontaja
   }
 
   val suoritusKomoResolver: PartialFunction[Suoritus, String] = {

@@ -47,11 +47,12 @@ class OppijaResource(val rekisterit: Registers, val hakemusService: HakemusServi
     val t0 = Platform.currentTime
     implicit val user = getUser
     val q = queryForParams(params)
+    val includeVapaamuotoinen = params.getAsOrElse[Boolean]("includeVapaamuotoinen", false)
 
     new AsyncResult() {
       override implicit def timeout: Duration = 500.seconds
 
-      private val oppijatFuture = fetchOppijat(q)
+      private val oppijatFuture = fetchOppijat(q, includeVapaamuotoinen)
 
       logQuery(q, t0, oppijatFuture)
 

@@ -33,7 +33,7 @@ trait OppijaFetcher {
   protected implicit def executor: ExecutionContext
   implicit val defaultTimeout: Timeout
 
-  def fetchOppijat(q: HakemusQuery)(implicit user: User): Future[Seq[Oppija]] = {
+  def fetchOppijat(q: HakemusQuery, includeVapaamuotoinen: Boolean)(implicit user: User): Future[Seq[Oppija]] = {
     def fetchPersonOids = q.hakukohde match {
       case Some(hakukohdeOid) => hakemusService.personOidsForHakukohde(hakukohdeOid, q.organisaatio)
       case _ => hakemusService.personOidsForHaku(q.haku.get, q.organisaatio)
@@ -41,12 +41,12 @@ trait OppijaFetcher {
 
     for (
       personOids <- fetchPersonOids;
-      oppijat <- fetchOppijat(personOids, q)(user)
+      oppijat <- fetchOppijat(personOids, q, includeVapaamuotoinen)(user)
     ) yield oppijat
   }
 
-  def fetchOppijat(persons: Set[String], q: HakemusQuery)(implicit user: User): Future[Seq[Oppija]] = {
-    enrichWithEnsikertalaisuus(getRekisteriData(persons)(user), q)
+  def fetchOppijat(persons: Set[String], q: HakemusQuery, includeVapaamuotoinen: Boolean = false)(implicit user: User): Future[Seq[Oppija]] = {
+    enrichWithEnsikertalaisuus(getRekisteriData(persons, includeVapaamuotoinen)(user), q)
   }
 
   def fetchOppija(person: String, hakuOid: Option[String])(implicit user: User): Future[Oppija] = {
@@ -59,7 +59,7 @@ trait OppijaFetcher {
     case None => rekisteriData
   }
 
-  def getRekisteriData(personOids: Set[String])(implicit user: User): Future[Seq[Oppija]] = {
+  def getRekisteriData(personOids: Set[String], includeVapaamuotoinen: Boolean = false)(implicit user: User): Future[Seq[Oppija]] = {
     val logId = UUID.randomUUID()
     def timed[A](msg: String, f: Future[A]): Future[A] =
       DurationHelper.timed[A](logger, Duration(100, TimeUnit.MILLISECONDS))(s"$logId: $msg", f)

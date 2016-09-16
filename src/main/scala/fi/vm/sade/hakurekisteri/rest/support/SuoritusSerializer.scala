@@ -69,7 +69,8 @@ object SuoritusSerializer {
       ("kuvaus" -> s.kuvaus) ~
       ("myontaja" -> s.myontaja) ~
       ("vuosi" -> s.vuosi) ~
-      ("kkTutkinto" -> s.kkTutkinto)
+      ("kkTutkinto" -> s.kkTutkinto) ~
+      ("tyyppi" -> s.tyyppi)
 
   }
 

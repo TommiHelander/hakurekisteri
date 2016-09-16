@@ -175,7 +175,7 @@ class OppijaResourceSpec extends ScalatraFunSuite with MockitoSugar with Dispatc
     when(hakemusServiceMock.personOidsForHaku(anyString(), any[Option[String]])).thenReturn(Future.successful(henkilot))
     when(hakemusServiceMock.suoritusoikeudenTaiAiemmanTutkinnonVuosi(anyString(), any[Option[String]])).thenReturn(Future.successful(Seq[FullHakemus]()))
 
-    waitFuture(resource.fetchOppijat(HakemusQuery(Some("1.2.246.562.6.00000000001"), None, None)))(oppijat => {
+    waitFuture(resource.fetchOppijat(HakemusQuery(Some("1.2.246.562.6.00000000001"), None, None), includeVapaamuotoinen = false))(oppijat => {
       val expectedSize: Int = 10001
       oppijat.length should be(expectedSize)
       oppijat.foreach(o => o.ensikertalainen should be(Some(true)))

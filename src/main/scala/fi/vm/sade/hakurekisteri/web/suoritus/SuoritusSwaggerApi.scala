@@ -65,13 +65,15 @@ trait SuoritusSwaggerModel extends OldSwaggerSyntax {
     ModelField("id", "suorituksen uuid", DataType.String, required = false),
     ModelField("kuvaus", null, DataType.String),
     ModelField("myontaja", null, DataType.String),
+    ModelField("henkiloOid", null, DataType.String),
     ModelField("vuosi", null, DataType.Int),
     ModelField("tyyppi", null, DataType.String),
+    ModelField("lahde", null, DataType.String),
     ModelField("index", null, DataType.Int),
     ModelField("vahvistettu", "onko suoritus vahvistettu, ei voida asettaa arvoon true vapaamuotoiselle suoritukselle", DataType.Boolean, Some("false"), required = false)
   )
 
-  def vapaamuotoinenSuoritusModel = Model("VapaamuotoinenSuoritus", "VapaamuotoinenSuoritus", virallinenSuoritusFields.map(t => (t.name, t)).toMap, Some("Suoritus"))
+  def vapaamuotoinenSuoritusModel = Model("VapaamuotoinenSuoritus", "VapaamuotoinenSuoritus", vapaamuotoinenSuoritusFields.map(t => (t.name, t)).toMap, Some("Suoritus"))
 
 }
 

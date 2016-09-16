@@ -65,14 +65,17 @@ trait JDBCRepository[R <: Resource[I, R], I, T <: JournalTable[R, I, _]] extends
 }
 
 trait JDBCService[R <: Resource[I, R], I, T <: JournalTable[R, I, _]] extends ResourceService[R,I] { this: JDBCRepository[R,I,T] with ActorLogging =>
-  val slowQuery: Long = 100
+  val slowQuery: Long = 1
 
   override def findBy(q: Query[R]): Future[Seq[R with Identified[I]]] = {
     dbQuery.lift(q).map{
       case Right(query) =>
         val start = Platform.currentTime
-        val f = journal.db.run(query.result).map(_.collect { case Updated(res) => res })(dbExecutor)
-        f.onComplete(_ => {
+        val f = journal.db.run(query.result).map(_.collect {
+          case Updated(res) =>
+            res
+        })(dbExecutor)
+        f.onComplete(x => {
           val runtime = Platform.currentTime - start
           if (runtime > slowQuery) {
             var queryStr = query.result.statements.mkString(" ")
