@@ -15,7 +15,7 @@ import fi.vm.sade.hakurekisteri.storage.repository.Updated
 import fi.vm.sade.hakurekisteri.suoritus._
 import fi.vm.sade.hakurekisteri.tools.{ItPostgres, Peruskoulu}
 import fi.vm.sade.hakurekisteri.web.rest.support._
-import fi.vm.sade.hakurekisteri.web.suoritus.SuoritusResource
+import fi.vm.sade.hakurekisteri.web.suoritus.VirallinenSuoritusResource
 import org.joda.time.LocalDate
 import org.json4s.jackson.Serialization._
 import org.mockito.Mockito._
@@ -71,7 +71,7 @@ class SuoritusResourceWithOPHSpec extends ScalatraFunSuite with MockitoSugar wit
     val suoritusRekisteri = system.actorOf(Props(new SuoritusJDBCActor(suoritusJournal, 1)))
     val guardedSuoritusRekisteri = system.actorOf(Props(new FakeAuthorizer(suoritusRekisteri)))
 
-    val servletWithOPHRight = new SuoritusResource(guardedSuoritusRekisteri, parameterActor, SuoritusQuery(_))
+    val servletWithOPHRight = new VirallinenSuoritusResource(guardedSuoritusRekisteri, parameterActor, SuoritusQuery(_))
     addServlet(servletWithOPHRight, "/*")
 
     super.beforeAll()
@@ -121,10 +121,10 @@ class SuoritusResourceWithOPOSpec extends ScalatraFunSuite with MockitoSugar wit
     val x = TestActorRef(new MockParameterActor(true))
     val y = TestActorRef(new MockParameterActor(false))
 
-    val servletWithOPORightActive = new SuoritusResource(guardedSuoritusRekisteri, x, SuoritusQuery(_))
+    val servletWithOPORightActive = new VirallinenSuoritusResource(guardedSuoritusRekisteri, x, SuoritusQuery(_))
     addServlet(servletWithOPORightActive, "/foo", "foo")
 
-    val servletWithOPORightPassive = new SuoritusResource(guardedSuoritusRekisteri, y, SuoritusQuery(_))
+    val servletWithOPORightPassive = new VirallinenSuoritusResource(guardedSuoritusRekisteri, y, SuoritusQuery(_))
     addServlet(servletWithOPORightPassive, "/bar", "bar")
 
     super.beforeAll()

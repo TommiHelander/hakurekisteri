@@ -11,7 +11,7 @@ import fi.vm.sade.hakurekisteri.storage.repository.Updated
 import fi.vm.sade.hakurekisteri.suoritus._
 import fi.vm.sade.hakurekisteri.tools.{ItPostgres, Peruskoulu}
 import fi.vm.sade.hakurekisteri.web.rest.support._
-import fi.vm.sade.hakurekisteri.web.suoritus.SuoritusResource
+import fi.vm.sade.hakurekisteri.web.suoritus.VirallinenSuoritusResource
 import org.joda.time.LocalDate
 import org.json4s.jackson.Serialization._
 import org.scalatest.BeforeAndAfterEach
@@ -42,7 +42,7 @@ class SuoritusServletSpec extends ScalatraFunSuite with BeforeAndAfterEach {
       }
     }))
     val guardedSuoritusRekisteri = system.actorOf(Props(new FakeAuthorizer(system.actorOf(Props(new SuoritusJDBCActor(suoritusJournal, 1))))))
-    addServlet(new SuoritusResource(guardedSuoritusRekisteri, mockParameterActor, SuoritusQuery(_)), "/*")
+    addServlet(new VirallinenSuoritusResource(guardedSuoritusRekisteri, mockParameterActor, SuoritusQuery(_)), "/*")
     super.beforeAll()
   }
 

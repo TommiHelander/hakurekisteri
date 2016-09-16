@@ -9,7 +9,7 @@ import org.joda.time.LocalDate
 import org.scalatra.commands._
 
 
-class CreateSuoritusCommand extends HakurekisteriCommand[Suoritus] with LocalDateSupport {
+class CreateVirallinenSuoritusCommand extends HakurekisteriCommand[Suoritus] with LocalDateSupport {
 
   val komo: Field[String] = asType[String]("komo").notBlank
   val myontaja: Field[String] = asType[String]("myontaja").notBlank

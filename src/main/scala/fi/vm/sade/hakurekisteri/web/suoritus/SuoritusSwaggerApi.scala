@@ -5,7 +5,7 @@ import org.scalatra.swagger._
 import fi.vm.sade.hakurekisteri.web.rest.support.{HakurekisteriResource, OldSwaggerSyntax}
 import fi.vm.sade.hakurekisteri.suoritus.{yksilollistaminen, Suoritus}
 
-trait SuoritusSwaggerApi extends SuoritusSwaggerModel { this: HakurekisteriResource[Suoritus, CreateSuoritusCommand] =>
+trait SuoritusSwaggerApi extends SuoritusSwaggerModel { this: HakurekisteriResource[Suoritus, CreateVirallinenSuoritusCommand] =>
 
   protected val applicationDescription = "Suoritustietojen rajapinta"
 

@@ -13,10 +13,10 @@ import org.scalatra.swagger.Swagger
 
 import scala.concurrent.Future
 
-class SuoritusResource
+class VirallinenSuoritusResource
       (suoritusRekisteriActor: ActorRef, parameterActor: ActorRef, queryMapper: (Map[String, String]) => Query[Suoritus])
       (implicit sw: Swagger, s: Security, system: ActorSystem)
-  extends HakurekisteriResource[Suoritus, CreateSuoritusCommand](suoritusRekisteriActor, SuoritusQuery(_)) with SuoritusSwaggerApi with HakurekisteriCrudCommands[Suoritus, CreateSuoritusCommand] with SecuritySupport with IncidentReporting{
+  extends HakurekisteriResource[Suoritus, CreateVirallinenSuoritusCommand](suoritusRekisteriActor, SuoritusQuery(_)) with SuoritusSwaggerApi with HakurekisteriCrudCommands[Suoritus, CreateVirallinenSuoritusCommand] with SecuritySupport with IncidentReporting{
 
   override def createEnabled(resource: Suoritus, user: Option[User]) = {
     resource match {
