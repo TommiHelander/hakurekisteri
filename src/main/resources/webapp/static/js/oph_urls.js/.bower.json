@@ -1,11 +1,11 @@
 {
   "name": "oph_urls.js",
   "_cacheHeaders": {
-    "ETag": "\"076849eb6dc9c292b1d45e8b06ae3ef42ed0ca86\"",
-    "Content-Length": "15227",
+    "ETag": "\"86404f41a78e437b6ad7464996e9161564ca21e1\"",
+    "Content-Length": "10787",
     "Content-Type": "text/plain; charset=utf-8"
   },
-  "_release": "e-tag:076849eb6",
+  "_release": "e-tag:86404f41a",
   "main": "index.js",
   "_source": "https://raw.githubusercontent.com/Opetushallitus/oph-urls-js/master/oph_urls.js",
   "_target": "*",
