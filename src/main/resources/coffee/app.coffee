@@ -3,7 +3,7 @@
 injector = angular.injector(['ng']);
 $http = injector.get('$http');
 
-window.urls.load("suoritusrekisteri-web-oph.json", {overrides: "rest/v1/properties"}).then ->
+window.urls.loadFromUrls("suoritusrekisteri-web-oph.json", "rest/v1/properties").success ->
   $http.get(window.url("cas.myroles"),
     cache: true
   ).success (myroles) ->
