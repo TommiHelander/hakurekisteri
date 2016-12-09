@@ -138,6 +138,30 @@ class EnsikertalainenActorSpec extends FlatSpec with Matchers with FutureWaiting
     })
   }
 
+  it should "return combine several ensikertalaisuus false reasons together" in {
+    val date = new LocalDate()
+    val (actor, valintarek) = initEnsikertalainenActor(
+      suoritukset = Seq(
+        VirallinenSuoritus(koulutus_699999, myontaja, "VALMIS", date, henkiloOid, yksilollistaminen.Ei, "FI", None, vahv = true, "")
+      ),
+      opiskeluoikeudet = Seq(
+        Opiskeluoikeus(date, Some(date.plusYears(1)), henkiloOid, koulutus_699999, myontaja, "")
+      ),
+      vastaanotot = Seq(EnsimmainenVastaanotto(henkiloOid, Some(date.toDateTimeAtStartOfDay)))
+    )
+
+    waitFuture(
+      (actor ? EnsikertalainenQuery(henkiloOids = Set(henkiloOid), hakuOid = Testihaku.oid)).mapTo[Seq[Ensikertalainen]]
+    )((e: Seq[Ensikertalainen]) => {
+      e.head.ensikertalainen should be (false)
+      e.head.menettamisenPeruste should be (Set(SuoritettuKkTutkinto(date.toDateTimeAtStartOfDay),
+        OpiskeluoikeusAlkanut(date.plusYears(1).toDateTimeAtStartOfDay),
+        KkVastaanotto(date.toDateTimeAtStartOfDay)))
+      valintarek.underlyingActor.counter should be (0)
+    })
+  }
+
+
   private def initEnsikertalainenActor(suoritukset: Seq[Suoritus] = Seq(),
                                        opiskeluoikeudet: Seq[Opiskeluoikeus] = Seq(),
                                        vastaanotot: Seq[EnsimmainenVastaanotto] = Seq(),
