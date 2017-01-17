@@ -90,7 +90,7 @@ class ImportBatchActor(val journal: JDBCJournal[ImportBatch, UUID, ImportBatchTa
 
   override val dbExecutor = ExecutionContexts.fromExecutor(Executors.newFixedThreadPool(poolSize))
 
-  override def deduplicationQuery(i: ImportBatch)(t: ImportBatchTable): lifted.Rep[Boolean] =
+  override def deduplicationQuery(i: ImportBatch, personAliasFetcher: Option[PersonAliasFetcher] = None)(t: ImportBatchTable): lifted.Rep[Boolean] =
     t.source === i.source && t.batchType === i.batchType && t.externalId.getOrElse("") === i.externalId.getOrElse("")
 
   override def receive: Receive = super.receive.orElse {

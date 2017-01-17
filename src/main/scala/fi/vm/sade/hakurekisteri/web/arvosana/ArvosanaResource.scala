@@ -4,6 +4,7 @@ import _root_.akka.pattern.ask
 import akka.actor.{ActorRef, ActorSystem}
 import fi.vm.sade.hakurekisteri.KomoOids
 import fi.vm.sade.hakurekisteri.arvosana.{Arvosana, ArvosanaQuery}
+import fi.vm.sade.hakurekisteri.integration.henkilo.IOppijaNumeroRekisteri
 import fi.vm.sade.hakurekisteri.rest.support.User
 import fi.vm.sade.hakurekisteri.suoritus.{Suoritus, VirallinenSuoritus}
 import fi.vm.sade.hakurekisteri.web.rest.support.{HakurekisteriCrudCommands, HakurekisteriResource, Security, SecuritySupport}
@@ -11,9 +12,9 @@ import org.scalatra.swagger.Swagger
 
 import scala.concurrent.Future
 
-class ArvosanaResource(arvosanaActor: ActorRef, suoritusActor: ActorRef)
+class ArvosanaResource(arvosanaActor: ActorRef, suoritusActor: ActorRef, oppijaNumeroRekisteri: IOppijaNumeroRekisteri)
                       (implicit sw: Swagger, s: Security, system: ActorSystem)
-  extends HakurekisteriResource[Arvosana, CreateArvosanaCommand](arvosanaActor, ArvosanaQuery(_))
+  extends HakurekisteriResource[Arvosana, CreateArvosanaCommand](arvosanaActor, ArvosanaQuery(_), oppijaNumeroRekisteri)
     with ArvosanaSwaggerApi
     with HakurekisteriCrudCommands[Arvosana, CreateArvosanaCommand]
     with SecuritySupport {

@@ -1,13 +1,18 @@
 package fi.vm.sade.hakurekisteri.storage.repository
 
 
+import fi.vm.sade.hakurekisteri.integration.henkilo.PersonOidsWithAliases
 import fi.vm.sade.hakurekisteri.storage.Identified
 import fi.vm.sade.hakurekisteri.rest.support.Resource
+
 import scala.compat.Platform
+import scala.concurrent.Future
 
 trait Repository[T, I] {
 
   def save(t:T):T with Identified[I]
+
+  def save(t:T, personOidAliasFetcher: (Set[String]) => Future[PersonOidsWithAliases]):T with Identified[I]
 
   def insert(t:T):T with Identified[I]
 
@@ -60,6 +65,8 @@ trait InMemRepository[T <: Resource[I, T], I] extends Repository[T, I] {
 
     }
   }
+
+  def save(t:T, personOidAliasFetcher: (Set[String]) => Future[PersonOidsWithAliases]):T with Identified[I] = ??? // Let's implement if needed
 
   def insert(o: T ): T with Identified[I] = {
 

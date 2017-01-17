@@ -7,6 +7,7 @@ import akka.event.Logging
 import dispatch.Defaults._
 import dispatch._
 import fi.vm.sade.hakurekisteri.integration.VirkailijaRestClient
+import fi.vm.sade.hakurekisteri.integration.henkilo.{IOppijaNumeroRekisteri, OppijaNumeroRekisteri, ResourceAndPersonAliasFetcher}
 import fi.vm.sade.hakurekisteri.rest.support.{Query, Resource, User}
 import fi.vm.sade.hakurekisteri.storage.{DeleteResource, Identified}
 import fi.vm.sade.hakurekisteri.{Config, Oids}
@@ -67,14 +68,14 @@ class FutureOrganizationHierarchy[A <: Resource[I, A] :Manifest, I: Manifest]
       ) yield result
       checkedRights pipeTo sender
 
-    case AuthorizedCreate(resource:A, user) =>
-      filteredActor forward resource
+    case AuthorizedCreate(resource:A, user, oppijaNumeroRekisteri) =>
+      filteredActor.forward(ResourceAndPersonAliasFetcher[A,I](resource, oppijaNumeroRekisteri.enrichWithAliases))
 
-    case AuthorizedUpdate(resource: A, user) =>
+    case AuthorizedUpdate(resource: A, user, oppijaNumeroRekisteri) =>
       val checked = for (resourceToUpdate <- filteredActor ? resource.identify.id;
                          rightsForOld <- checkRights(user, "WRITE")(resourceToUpdate.asInstanceOf[Option[A]]);
                          rightsForNew <- checkRights(user, "WRITE")(Some(resource));
-                         result <- if (rightsForOld.isDefined && rightsForNew.isDefined) filteredActor ? resource else Future.successful(rightsForOld)
+                         result <- if (rightsForOld.isDefined && rightsForNew.isDefined) filteredActor ? ResourceAndPersonAliasFetcher[A,I](resource, oppijaNumeroRekisteri.enrichWithAliases) else Future.successful(rightsForOld)
       ) yield result
       checked pipeTo sender
 
@@ -119,8 +120,8 @@ case class AuthorizedRead[I](id: I, user: User)
 case class AuthorizedReadWithOrgsChecked[I](id: I, user: User)
 
 case class AuthorizedDelete[I](id: I, user: User)
-case class AuthorizedCreate[A <: Resource[I, A], I](q: A,  user: User)
-case class AuthorizedUpdate[A <: Resource[I, A] :Manifest, I : Manifest](q: A with Identified[I], user: User)
+case class AuthorizedCreate[A <: Resource[I, A], I](q: A,  user: User, oppijaNumeroRekisteri: IOppijaNumeroRekisteri)
+case class AuthorizedUpdate[A <: Resource[I, A] :Manifest, I : Manifest](q: A with Identified[I], user: User, oppijaNumeroRekisteri: IOppijaNumeroRekisteri)
 
 case class Subject(resource: String, orgs: Set[String], komo: Option[String])
 case class OrganisaatioPerustieto(oid: String, alkuPvm: String, lakkautusPvm: Option[Long], parentOid: String, parentOidPath: String,

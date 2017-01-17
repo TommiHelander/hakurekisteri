@@ -4,11 +4,12 @@ import akka.actor.Status.Failure
 import akka.actor.{Actor, ActorLogging, Status}
 import akka.event.Logging
 import akka.pattern.pipe
+import fi.vm.sade.hakurekisteri.integration.henkilo.{PersonOidsWithAliases, ResourceAndPersonAliasFetcher}
 import fi.vm.sade.hakurekisteri.rest.support.{Query, QueryWithPersonAliasesResolver, Resource}
 import fi.vm.sade.hakurekisteri.storage.repository.Repository
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 
 abstract class ResourceActor[T <: Resource[I, T] : Manifest, I : Manifest] extends Actor with ActorLogging { this: Repository[T, I] with ResourceService[T, I] =>
@@ -33,6 +34,9 @@ abstract class ResourceActor[T <: Resource[I, T] : Manifest, I : Manifest] exten
 
     case o: T =>
       sender ! operationOrFailure(() => save(o))
+
+    case ResourceAndPersonAliasFetcher(o: T, personOidAliasFetcher) =>
+      sender ! operationOrFailure(() => save(o, personOidAliasFetcher))
 
     case id: I =>
       sender ! operationOrFailure(() => get(id))

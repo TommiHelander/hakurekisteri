@@ -17,7 +17,7 @@ import scala.util.Try
 
 class SuoritusResource(suoritusRekisteriActor: ActorRef, parameterActor: ActorRef, oppijaNumeroRekisteri: IOppijaNumeroRekisteri)
                       (implicit sw: Swagger, s: Security, system: ActorSystem)
-  extends HakurekisteriResource[Suoritus, CreateSuoritusCommand](suoritusRekisteriActor, p => ??? /* Not in use */) with SuoritusSwaggerApi with HakurekisteriCrudCommands[Suoritus, CreateSuoritusCommand] with SecuritySupport with IncidentReporting{
+  extends HakurekisteriResource[Suoritus, CreateSuoritusCommand](suoritusRekisteriActor, p => ???, oppijaNumeroRekisteri) with SuoritusSwaggerApi with HakurekisteriCrudCommands[Suoritus, CreateSuoritusCommand] with SecuritySupport with IncidentReporting{
 
   override def queryResource(user: Option[User], t0: Long): Product with Serializable = {
     (Try {

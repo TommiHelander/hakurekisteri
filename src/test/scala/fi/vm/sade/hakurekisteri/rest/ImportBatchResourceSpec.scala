@@ -8,6 +8,7 @@ import fi.vm.sade.hakurekisteri.MockConfig
 import fi.vm.sade.hakurekisteri.acceptance.tools.FakeAuthorizer
 import fi.vm.sade.hakurekisteri.batchimport._
 import fi.vm.sade.hakurekisteri.integration._
+import fi.vm.sade.hakurekisteri.integration.henkilo.MockOppijaNumeroRekisteri
 import fi.vm.sade.hakurekisteri.integration.organisaatio.MockOrganisaatioActor
 import fi.vm.sade.hakurekisteri.integration.parametrit._
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
@@ -48,7 +49,7 @@ class ImportBatchResourceSpec extends ScalatraFunSuite with MockitoSugar with Di
     val eraOrgRekisteri = system.actorOf(Props(new ImportBatchOrgActor(database)))
     val eraRekisteri = system.actorOf(Props(new ImportBatchActor(eraJournal, 5)))
     val authorized = system.actorOf(Props(new FakeAuthorizer(eraRekisteri)))
-    addServlet(new ImportBatchResource(eraOrgRekisteri, authorized, orgsActor, parameterActor, new MockConfig, (foo) => ImportBatchQuery(None, None, None))("identifier", ImportBatch.batchTypePerustiedot, "data", PerustiedotXmlConverter, TestSchema), "/batch")
+    addServlet(new ImportBatchResource(eraOrgRekisteri, authorized, orgsActor, parameterActor, new MockConfig, (foo) => ImportBatchQuery(None, None, None), MockOppijaNumeroRekisteri)("identifier", ImportBatch.batchTypePerustiedot, "data", PerustiedotXmlConverter, TestSchema), "/batch")
     super.beforeAll()
   }
 

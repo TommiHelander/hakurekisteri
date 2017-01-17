@@ -11,7 +11,7 @@ import fi.vm.sade.hakurekisteri.storage.repository.{Deleted, _}
 import fi.vm.sade.hakurekisteri.storage.{Identified, ResourceService}
 import slick.ast.BaseTypedType
 import slick.dbio.DBIOAction
-import slick.dbio.Effect.{All, Transactional}
+import slick.dbio.Effect.{All, Read, Transactional}
 import slick.lifted
 import slick.util.TreePrinter
 
@@ -21,6 +21,8 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 
 trait JDBCRepository[R <: Resource[I, R], I, T <: JournalTable[R, I, _]] extends Repository[R,I]  {
+
+  type PersonAliasFetcher = Set[String] => Future[PersonOidsWithAliases]
 
   val journal: JDBCJournal[R,I,T]
 
@@ -82,15 +84,23 @@ trait JDBCRepository[R <: Resource[I, R], I, T <: JournalTable[R, I, _]] extends
     case Updated(res) => res
   }
 
-  def deduplicationQuery(i: R)(t: T): lifted.Rep[Boolean]
+  def deduplicationQuery(i: R, personAliasFetcher: Option[PersonAliasFetcher])(t: T): lifted.Rep[Boolean]
 
-  private def deduplicate(i: R): DBIO[Option[R with Identified[I]]] = all.filter(deduplicationQuery(i)).result.map(_.collect {
+  private def deduplicate(personAliasFetcher: Option[PersonAliasFetcher])(i: R): DBIO[Option[R with Identified[I]]] = all.filter(deduplicationQuery(i, personAliasFetcher)).result.map(_.collect {
     case Updated(res) => res
   }.headOption)
 
-  override def save(t: R): R with Identified[I] =
+  override def save(t: R): R with Identified[I] = {
+    doSave(t, deduplicate(None))
+  }
+
+  override def save(t: R, personOidAliasFetcher: PersonAliasFetcher): R with Identified[I] = {
+    doSave(t, deduplicate(Some(personOidAliasFetcher)))
+  }
+
+  private def doSave(t: R, deduplication: (R) => DBIO[Option[R with Identified[I]]]) = {
     journal.runAsSerialized(10, 5.milliseconds, s"Saving $t",
-      deduplicate(t).flatMap {
+      deduplication(t).flatMap {
         case Some(old) if old == t => DBIO.successful(old)
         case Some(old) => journal.addUpdate(t.identify(old.id))
         case None => journal.addUpdate(t.identify)
@@ -99,10 +109,11 @@ trait JDBCRepository[R <: Resource[I, R], I, T <: JournalTable[R, I, _]] extends
       case Right(r) => r
       case Left(e) => throw e
     }
+  }
 
   override def insert(t: R): R with Identified[I] =
     journal.runAsSerialized(10, 5.milliseconds, s"Inserting $t",
-      deduplicate(t).flatMap(_.fold(journal.addUpdate(t.identify))(DBIO.successful))
+      deduplicate(None)(t).flatMap(_.fold(journal.addUpdate(t.identify))(DBIO.successful))
     ) match {
       case Right(r) => r
       case Left(e) => throw e

@@ -10,13 +10,14 @@ import _root_.akka.actor.{ActorRef, ActorSystem}
 import _root_.akka.event.{Logging, LoggingAdapter}
 import _root_.akka.pattern.{AskTimeoutException, ask}
 import fi.vm.sade.hakurekisteri.integration.organisaatio.{ChildOids, GetChildOids}
-import fi.vm.sade.hakurekisteri.organization.{AuthorizedQuery, AuthorizedReadWithOrgsChecked, AuthorizedRead}
+import fi.vm.sade.hakurekisteri.organization.{AuthorizedQuery, AuthorizedRead, AuthorizedReadWithOrgsChecked}
 import fi.vm.sade.hakurekisteri.{Config, Oids}
 import fi.vm.sade.hakurekisteri.batchimport.{ImportBatch, ImportStatus, Reprocess, WrongBatchStateException, _}
 import fi.vm.sade.hakurekisteri.integration.parametrit.IsSendingEnabled
 import fi.vm.sade.hakurekisteri.integration.valintatulos.{Ilmoittautumistila, Valintatila, Vastaanottotila}
 import fi.vm.sade.hakurekisteri.rest.support._
 import fi.vm.sade.hakurekisteri.batchimport.QueryImportBatchReferences
+import fi.vm.sade.hakurekisteri.integration.henkilo.IOppijaNumeroRekisteri
 import fi.vm.sade.hakurekisteri.storage.Identified
 import fi.vm.sade.hakurekisteri.suoritus.yksilollistaminen
 import fi.vm.sade.hakurekisteri.web.rest.support._
@@ -41,7 +42,8 @@ class ImportBatchResource(eraOrgRekisteri: ActorRef,
                           orgsActor: ActorRef,
                           parameterActor: ActorRef,
                           config: Config,
-                          queryMapper: (Map[String, String]) => Query[ImportBatch])
+                          queryMapper: (Map[String, String]) => Query[ImportBatch],
+                          oppijaNumeroRekisteri: IOppijaNumeroRekisteri)
                          (externalIdField: String,
                           batchType: String,
                           dataField: String,
@@ -49,7 +51,7 @@ class ImportBatchResource(eraOrgRekisteri: ActorRef,
                           schema: SchemaDefinition,
                           imports: SchemaDefinition*)
                          (implicit sw: Swagger, s: Security, system: ActorSystem, mf: Manifest[ImportBatch], cf: Manifest[ImportBatchCommand])
-    extends HakurekisteriResource[ImportBatch, ImportBatchCommand](eraRekisteri, queryMapper) with ImportBatchSwaggerApi with HakurekisteriCrudCommands[ImportBatch, ImportBatchCommand] with SecuritySupport with FileUploadSupport with IncidentReporting {
+    extends HakurekisteriResource[ImportBatch, ImportBatchCommand](eraRekisteri, queryMapper, oppijaNumeroRekisteri) with ImportBatchSwaggerApi with HakurekisteriCrudCommands[ImportBatch, ImportBatchCommand] with SecuritySupport with FileUploadSupport with IncidentReporting {
 
   override val logger: LoggingAdapter = Logging.getLogger(system, this)
 

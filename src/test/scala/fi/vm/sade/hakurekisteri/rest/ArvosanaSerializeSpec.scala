@@ -5,6 +5,7 @@ import java.util.UUID
 import akka.actor.{ActorSystem, Props}
 import fi.vm.sade.hakurekisteri.acceptance.tools.FakeAuthorizer
 import fi.vm.sade.hakurekisteri.arvosana._
+import fi.vm.sade.hakurekisteri.integration.henkilo.MockOppijaNumeroRekisteri
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import fi.vm.sade.hakurekisteri.rest.support.{HakurekisteriJsonSupport, JDBCJournal}
 import fi.vm.sade.hakurekisteri.storage.Identified
@@ -39,7 +40,7 @@ class ArvosanaSerializeSpec extends ScalatraFunSuite with BeforeAndAfterEach {
     database = Database.forURL(ItPostgres.getEndpointURL)
     arvosanaJournal = new JDBCJournal[Arvosana, UUID, ArvosanaTable](TableQuery[ArvosanaTable])
     val guardedArvosanaRekisteri = system.actorOf(Props(new FakeAuthorizer(system.actorOf(Props(new ArvosanaJDBCActor(arvosanaJournal, 1))))))
-    addServlet(new HakurekisteriResource[Arvosana, CreateArvosanaCommand](guardedArvosanaRekisteri, ArvosanaQuery(_)) with ArvosanaSwaggerApi with HakurekisteriCrudCommands[Arvosana, CreateArvosanaCommand], "/*")
+    addServlet(new HakurekisteriResource[Arvosana, CreateArvosanaCommand](guardedArvosanaRekisteri, ArvosanaQuery(_), MockOppijaNumeroRekisteri) with ArvosanaSwaggerApi with HakurekisteriCrudCommands[Arvosana, CreateArvosanaCommand], "/*")
     super.beforeAll()
   }
 

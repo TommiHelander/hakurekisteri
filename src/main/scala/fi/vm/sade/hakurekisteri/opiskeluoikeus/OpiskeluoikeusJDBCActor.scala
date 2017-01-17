@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext
 class OpiskeluoikeusJDBCActor(val journal: JDBCJournal[Opiskeluoikeus, UUID, OpiskeluoikeusTable], poolSize: Int)
   extends ResourceActor[Opiskeluoikeus, UUID] with JDBCRepository[Opiskeluoikeus, UUID, OpiskeluoikeusTable] with JDBCService[Opiskeluoikeus, UUID, OpiskeluoikeusTable] {
 
-  override def deduplicationQuery(o: Opiskeluoikeus)(t: OpiskeluoikeusTable): Rep[Boolean] =
+  override def deduplicationQuery(o: Opiskeluoikeus, personAliasFetcher: Option[PersonAliasFetcher] = None)(t: OpiskeluoikeusTable): Rep[Boolean] =
     t.henkiloOid === o.henkiloOid && t.komo === o.komo && t.myontaja === o.myontaja
 
   override val dbExecutor: ExecutionContext = ExecutionContexts.fromExecutor(Executors.newFixedThreadPool(poolSize))

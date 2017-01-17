@@ -8,6 +8,7 @@ import fi.vm.sade.hakurekisteri.MockConfig
 import fi.vm.sade.hakurekisteri.acceptance.tools.FakeAuthorizer
 import fi.vm.sade.hakurekisteri.batchimport._
 import fi.vm.sade.hakurekisteri.integration._
+import fi.vm.sade.hakurekisteri.integration.henkilo.MockOppijaNumeroRekisteri
 import fi.vm.sade.hakurekisteri.integration.organisaatio.HttpOrganisaatioActor
 import fi.vm.sade.hakurekisteri.integration.parametrit.{HttpParameterActor, SendingPeriod, TiedonsiirtoSendingPeriods}
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
@@ -42,7 +43,7 @@ class BatchSendingClosedSpec extends ScalatraFunSuite with MockitoSugar with Dis
     val eraOrgRekisteri = system.actorOf(Props(new ImportBatchOrgActor(database)))
     val eraRekisteri = system.actorOf(Props(new ImportBatchActor(eraJournal, 5)))
     val authorized = system.actorOf(Props(new FakeAuthorizer(eraRekisteri)))
-    addServlet(new ImportBatchResource(eraOrgRekisteri, authorized, orgsActor, parameterActor, new MockConfig, (foo) => ImportBatchQuery(None, None, None))("identifier", "perustiedot", "data", PerustiedotXmlConverter, TestSchema), "/batch")
+    addServlet(new ImportBatchResource(eraOrgRekisteri, authorized, orgsActor, parameterActor, new MockConfig, (foo) => ImportBatchQuery(None, None, None), MockOppijaNumeroRekisteri)("identifier", "perustiedot", "data", PerustiedotXmlConverter, TestSchema), "/batch")
     super.beforeAll()
   }
 

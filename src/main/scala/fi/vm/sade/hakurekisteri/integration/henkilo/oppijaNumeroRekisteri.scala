@@ -3,6 +3,7 @@ package fi.vm.sade.hakurekisteri.integration.henkilo
 import akka.actor.ActorSystem
 import akka.event.Logging
 import fi.vm.sade.hakurekisteri.integration.VirkailijaRestClient
+import fi.vm.sade.hakurekisteri.rest.support.Resource
 import org.apache.commons.httpclient.HttpStatus
 
 import scala.collection.Iterator
@@ -99,3 +100,5 @@ object PersonOidsWithAliases {
     PersonOidsWithAliases(queriedOids, aliasesByPersonOids, combinedOidSet)
   }
 }
+
+case class ResourceAndPersonAliasFetcher[R <: Resource[I,R],I](resource: R, personOidAliasFetcher: (Set[String]) => Future[PersonOidsWithAliases])

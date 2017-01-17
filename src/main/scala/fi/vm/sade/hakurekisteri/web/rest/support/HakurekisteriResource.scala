@@ -13,6 +13,7 @@ import fi.vm.sade.hakurekisteri.rest.support._
 import fi.vm.sade.hakurekisteri.storage.Identified
 import fi.vm.sade.hakurekisteri.web.HakuJaValintarekisteriStack
 import fi.vm.sade.hakurekisteri.web.batchimport.ResourceNotEnabledException
+import fi.vm.sade.hakurekisteri.integration.henkilo.IOppijaNumeroRekisteri
 import org.scalatra._
 import org.scalatra.commands._
 import org.scalatra.json.{JacksonJsonSupport, JsonSupport}
@@ -121,7 +122,7 @@ case class NotFoundException(resource: String) extends Exception(resource)
 case class UserNotAuthorized(message: String) extends Exception(message)
 
 abstract class HakurekisteriResource[A <: Resource[UUID, A], C <: HakurekisteriCommand[A]]
-(actor: ActorRef, qb: Map[String, String] => Query[A])
+(actor: ActorRef, qb: (Map[String, String]) => Query[A], oppijaNumeroRekisteri: IOppijaNumeroRekisteri)
 (implicit val security: Security, sw: Swagger, system: ActorSystem, mf: Manifest[A], cf: Manifest[C])
   extends HakuJaValintarekisteriStack with HakurekisteriJsonSupport with JacksonJsonSupport with SwaggerSupport with FutureSupport with HakurekisteriParsing[A]
   with QueryLogging with SecuritySupport {
@@ -166,7 +167,7 @@ abstract class HakurekisteriResource[A <: Resource[UUID, A], C <: HakurekisteriC
       errors => Future.failed(MalformedResourceException(errors)),
       (resource: A) =>
         createEnabled(resource, user).flatMap(enabled =>
-          if (enabled) Future.successful(AuthorizedCreate[A, UUID](resource, user.get))
+          if (enabled) Future.successful(AuthorizedCreate[A, UUID](resource, user.get, oppijaNumeroRekisteri))
           else Future.failed(ResourceNotEnabledException)
         )
     ))
@@ -195,7 +196,7 @@ abstract class HakurekisteriResource[A <: Resource[UUID, A], C <: HakurekisteriC
             (myCommand >> (_.toValidatedResource(user.get.username))).flatMap(
               _.fold(
                 errors => Future.failed(MalformedResourceException(errors)),
-                resource => Future.successful(AuthorizedUpdate[A, UUID](identifyResource(resource, id), user.get)))
+                resource => Future.successful(AuthorizedUpdate[A, UUID](identifyResource(resource, id), user.get, oppijaNumeroRekisteri)))
             )
           } else {
             Future.failed(ResourceNotEnabledException)

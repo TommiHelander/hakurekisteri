@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.actor.{ActorSystem, Props}
 import fi.vm.sade.hakurekisteri.acceptance.tools.FakeAuthorizer
+import fi.vm.sade.hakurekisteri.integration.henkilo.MockOppijaNumeroRekisteri
 import fi.vm.sade.hakurekisteri.opiskelija.{Opiskelija, OpiskelijaJDBCActor, OpiskelijaQuery, OpiskelijaTable}
 import fi.vm.sade.hakurekisteri.rest.support.HakurekisteriDriver.api._
 import fi.vm.sade.hakurekisteri.rest.support.{HakurekisteriJsonSupport, JDBCJournal}
@@ -34,7 +35,7 @@ class OpiskelijaSpec extends ScalatraFunSuite with BeforeAndAfterEach {
     database = Database.forURL(ItPostgres.getEndpointURL)
     val opiskelijaJournal = new JDBCJournal[Opiskelija, UUID, OpiskelijaTable](TableQuery[OpiskelijaTable])
     val guardedOpiskelijaRekisteri = system.actorOf(Props(new FakeAuthorizer(system.actorOf(Props(new OpiskelijaJDBCActor(opiskelijaJournal, 1))))))
-    addServlet(new HakurekisteriResource[Opiskelija, CreateOpiskelijaCommand](guardedOpiskelijaRekisteri, OpiskelijaQuery(_)) with OpiskelijaSwaggerApi with HakurekisteriCrudCommands[Opiskelija, CreateOpiskelijaCommand], "/*")
+    addServlet(new HakurekisteriResource[Opiskelija, CreateOpiskelijaCommand](guardedOpiskelijaRekisteri, OpiskelijaQuery(_), MockOppijaNumeroRekisteri) with OpiskelijaSwaggerApi with HakurekisteriCrudCommands[Opiskelija, CreateOpiskelijaCommand], "/*")
     super.beforeAll()
   }
 

@@ -1,7 +1,7 @@
 package fi.vm.sade.hakurekisteri.suoritus
 
 import java.util.UUID
-import java.util.concurrent.Executors
+import java.util.concurrent.{Executors, TimeUnit}
 
 import akka.dispatch.ExecutionContexts
 import com.github.nscala_time.time.Imports._
@@ -16,17 +16,31 @@ import slick.dbio.DBIOAction
 import slick.dbio.Effect.All
 import slick.lifted.Rep
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future, duration}
 import scala.language.implicitConversions
 
 class SuoritusJDBCActor(val journal: JDBCJournal[Suoritus, UUID, SuoritusTable], poolSize: Int)
   extends ResourceActor[Suoritus, UUID] with JDBCRepository[Suoritus, UUID, SuoritusTable] with JDBCService[Suoritus, UUID, SuoritusTable] {
 
-  override def deduplicationQuery(o: Suoritus)(t: SuoritusTable): Rep[Boolean] = o match {
-    case VapaamuotoinenSuoritus(henkilo, _, _, _, tyyppi, index, _) =>
-      t.henkiloOid === henkilo && (t.tyyppi === tyyppi).asColumnOf[Boolean] && (t.index === index).asColumnOf[Boolean]
-    case VirallinenSuoritus(komo, myontaja, _, _, henkilo, _, _, _, vahv, _) =>
-      (t.komo === komo).asColumnOf[Boolean] && t.myontaja === myontaja && t.henkiloOid === henkilo && (t.vahvistettu === vahv).asColumnOf[Boolean]
+  override def deduplicationQuery(o: Suoritus, personAliasFetcherOpt: Option[PersonAliasFetcher])(t: SuoritusTable): Rep[Boolean] = {
+    personAliasFetcherOpt match {
+      case None =>
+        o match {
+          case VapaamuotoinenSuoritus(henkilo, _, _, _, tyyppi, index, _) =>
+            t.henkiloOid === henkilo && (t.tyyppi === tyyppi).asColumnOf[Boolean] && (t.index === index).asColumnOf[Boolean]
+          case VirallinenSuoritus(komo, myontaja, _, _, henkilo, _, _, _, vahv, _) =>
+            (t.komo === komo).asColumnOf[Boolean] && t.myontaja === myontaja && t.henkiloOid === henkilo && (t.vahvistettu === vahv).asColumnOf[Boolean]
+        }
+      case Some(personAliasFetcher) =>
+        Await.result(personAliasFetcher.apply(Set(o.henkiloOid)).map { (personOidsWithAliases: PersonOidsWithAliases) =>
+          o match {
+            case VapaamuotoinenSuoritus(henkilo, _, _, _, tyyppi, index, _) =>
+              (t.henkiloOid inSet personOidsWithAliases.henkiloOidsWithLinkedOids) && (t.tyyppi === tyyppi).asColumnOf[Boolean] && (t.index === index).asColumnOf[Boolean]
+            case VirallinenSuoritus(komo, myontaja, _, _, henkilo, _, _, _, vahv, _) =>
+              (t.komo === komo).asColumnOf[Boolean] && t.myontaja === myontaja && (t.henkiloOid inSet personOidsWithAliases.henkiloOidsWithLinkedOids) && (t.vahvistettu === vahv).asColumnOf[Boolean]
+          }
+        }, atMost = duration.Duration.apply(1, TimeUnit.MINUTES))
+    }
   }
 
   override val dbExecutor: ExecutionContext = ExecutionContexts.fromExecutor(Executors.newFixedThreadPool(poolSize))
