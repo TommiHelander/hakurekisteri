@@ -348,7 +348,7 @@
                             assertArvosanaRivi("Matematiikka", "04.06.2015", "", ["10"], ["9"])
                             assertOpintopolkuVastaanotot(['Testihaku', '1.2.246.561.29.00000000002'],
                                                          ['Testi hakukohde', '1.2.246.561.20.00000000002'],
-                                                         ['VastaanotaEhdollisesti', 'VastaanotaSitovasti'],
+                                                         ['EHDOLLISESTI_VASTAANOTTANUT', 'VASTAANOTTANUT_SITOVASTI'],
                                                          ['01.07.2015', '01.07.2014'])
                             assertVanhatVastaanotot(["Vanhan hakukohteen nimi:101"], ["19.06.2014"])
                         },
